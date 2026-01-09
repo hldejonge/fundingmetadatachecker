@@ -103,8 +103,7 @@
     </div>
 
     <script>
-        const APIFY_TOKEN = 'apify_api_k7AcwDEd1p1rQNwo5mobjt9Xn0F8FL0OP2hr';
-        const ACTOR_ID = 'tomato_badge~doi-acknowledgement-scraper';
+        const SCRAPINGBEE_API_KEY = 'ZOLO8U5NQBWC692V7TP5DIZMLLZNEEWGXZPLKIQ0HSN1UE8TZGOK6J3ZQQ0EZUIDSV50GRPISA51FTP4';
 
         async function getAcknowledgement() {
             const doi = document.getElementById('doiInput').value.trim();
@@ -116,92 +115,160 @@
                 return;
             }
             
+            // Clean DOI
+            const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+            
             // Show loading state
             resultDiv.style.display = 'block';
             resultDiv.className = 'loading';
-            resultDiv.innerHTML = '⏳ Searching... This may take 10-30 seconds...';
+            resultDiv.innerHTML = '⏳ Searching... This may take 5-15 seconds...';
             searchBtn.disabled = true;
             
             try {
-                // Start the Actor with proper input format
-                const runResponse = await fetch(`https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        doi: doi
-                    })
-                });
+                // Build ScrapingBee URL
+                const targetUrl = `https://doi.org/${cleanDoi}`;
+                const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?` +
+                    `api_key=${SCRAPINGBEE_API_KEY}` +
+                    `&url=${encodeURIComponent(targetUrl)}` +
+                    `&render_js=false` +
+                    `&premium_proxy=false`;
                 
-                if (!runResponse.ok) {
-                    const errorText = await runResponse.text();
-                    throw new Error(`Failed to start Actor (${runResponse.status}): ${errorText}`);
+                console.log('Fetching:', targetUrl);
+                
+                // Fetch via ScrapingBee
+                const response = await fetch(scrapingBeeUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`ScrapingBee returned status ${response.status}`);
                 }
                 
-                const runData = await runResponse.json();
-                const runId = runData.data.id;
+                let html = await response.text();
+                html = html.replace(/[\r\n]+/g, ' ');
                 
-                console.log('Actor started, run ID:', runId);
+                console.log('HTML received, length:', html.length);
                 
-                // Wait for the run to finish
-                let attempts = 0;
-                const maxAttempts = 60;
-                let statusData;
+                // Extract acknowledgement and funding
+                const sections = { acknowledgement: [], funding: [] };
+                const seenContentHashes = {};
                 
-                while (attempts < maxAttempts) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                // 1. Heading-based extraction
+                const headingRegex = /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi;
+                const headings = [];
+                let match;
+                
+                while ((match = headingRegex.exec(html)) !== null) {
+                    headings.push({
+                        level: parseInt(match[1]),
+                        text: match[2],
+                        start: match.index,
+                        end: headingRegex.lastIndex
+                    });
+                }
+                headings.push({ start: html.length, level: 0 });
+                
+                for (let i = 0; i < headings.length - 1; i++) {
+                    const current = headings[i];
+                    const next = headings[i + 1];
                     
-                    const statusResponse = await fetch(
-                        `https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}?token=${APIFY_TOKEN}`
-                    );
+                    const label = current.text.replace(/<[^>]+>/g, '').trim().toLowerCase();
+                    const isAck = /acknowledgement?s?|acknowledgment?s?/.test(label);
+                    const isFund = /funding/.test(label);
                     
-                    statusData = await statusResponse.json();
-                    const status = statusData.data.status;
+                    if (!isAck && !isFund) continue;
                     
-                    console.log('Status:', status);
+                    const contentHtml = html.substring(current.end, next.start).trim();
+                    let cleaned = contentHtml.replace(/<[^>]+>/g, ' ')
+                        .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
                     
-                    if (status === 'SUCCEEDED') {
-                        // Get the results using dataset ID
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        
-                        const datasetId = statusData.data.defaultDatasetId;
-                        console.log('Dataset ID:', datasetId);
-                        
-                        const resultsResponse = await fetch(
-                            `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
-                        );
-                        
-                        if (!resultsResponse.ok) {
-                            throw new Error(`Failed to fetch results (${resultsResponse.status})`);
-                        }
-                        
-                        const results = await resultsResponse.json();
-                        console.log('Results:', results);
-                        console.log('Results type:', typeof results);
-                        console.log('Is array?', Array.isArray(results));
-                        console.log('Length:', results.length);
-                        
-                        if (Array.isArray(results) && results.length > 0) {
-                            console.log('First result:', results[0]);
-                            const acknowledgement = results[0].acknowledgement;
-                            resultDiv.className = '';
-                            resultDiv.innerHTML = acknowledgement;
-                        } else {
-                            resultDiv.className = 'error';
-                            resultDiv.innerHTML = 'No results found';
-                        }
-                        break;
-                    } else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
-                        throw new Error(`Actor run failed with status: ${status}`);
+                    if (cleaned.length < 20) continue;
+                    
+                    const hash = cleaned.substring(0, 300);
+                    if (seenContentHashes[hash]) continue;
+                    seenContentHashes[hash] = true;
+                    
+                    if (isAck && isFund) {
+                        sections.acknowledgement.push(cleaned);
+                        sections.funding.push(cleaned);
+                    } else if (isAck) {
+                        sections.acknowledgement.push(cleaned);
+                    } else if (isFund) {
+                        sections.funding.push(cleaned);
                     }
-                    
-                    attempts++;
                 }
                 
-                if (attempts >= maxAttempts) {
-                    throw new Error('Timeout: Actor took too long to complete');
+                // 2. Container fallback
+                if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {
+                    const containerPatterns = [
+                        /<section[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+                        /<div[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                        /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                        /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+                        /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                        /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
+                    ];
+                    
+                    for (const pattern of containerPatterns) {
+                        const matches = html.match(pattern);
+                        if (!matches) continue;
+                        
+                        for (const matchText of matches) {
+                            let cleaned = matchText.replace(/<[^>]+>/g, ' ')
+                                .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (cleaned.length < 20) continue;
+                            
+                            const hash = cleaned.substring(0, 300);
+                            if (seenContentHashes[hash]) continue;
+                            seenContentHashes[hash] = true;
+                            
+                            const isAck = /acknowledgement?s?|acknowledgment?s?/.test(matchText);
+                            const isFund = /funding/.test(matchText);
+                            
+                            if (isAck && isFund) {
+                                sections.acknowledgement.push(cleaned);
+                                sections.funding.push(cleaned);
+                            } else if (isAck) {
+                                sections.acknowledgement.push(cleaned);
+                            } else if (isFund) {
+                                sections.funding.push(cleaned);
+                            }
+                        }
+                    }
                 }
+                
+                // 3. Select longest result
+                function selectLongest(arr) {
+                    if (!arr || arr.length === 0) return null;
+                    return arr.reduce((max, current) => current.length > max.length ? current : max, '');
+                }
+                
+                const ackText = selectLongest(sections.acknowledgement);
+                const fundText = selectLongest(sections.funding);
+                
+                let result = '';
+                if (ackText && fundText) {
+                    result = ackText + "\n\nFunding:\n" + fundText;
+                } else if (ackText) {
+                    result = ackText;
+                } else if (fundText) {
+                    result = fundText;
+                } else {
+                    result = "No acknowledgement section found";
+                }
+                
+                if (result.length > 5000) {
+                    result = result.substring(0, 5000) + "...";
+                }
+                
+                console.log('Result found:', result.substring(0, 100) + '...');
+                
+                // Display result
+                resultDiv.className = '';
+                resultDiv.innerHTML = result;
                 
             } catch (error) {
                 console.error('Error:', error);
