@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;DOI Acknowledgement Finder&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-family: Arial, sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>max-width: 800px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin: 50px auto;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background-color: #f5f5f5;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.container {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 30px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 2px 10px rgba(0,0,0,0.1);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>h1 {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #333;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>text-align: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.input-group {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin: 20px 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>label {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 5px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-weight: bold;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #555;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>input[type="text"] {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 2px solid #ddd;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 5px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-sizing: border-box;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>button {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background-color: #4CAF50;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 5px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-top: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>button:hover {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background-color: #45a049;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>button:disabled {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background-color: #ccc;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>cursor: not-allowed;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>#result {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-top: 30px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background-color: #f9f9f9;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-left: 4px solid #4CAF50;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 5px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>white-space: pre-wrap;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>word-wrap: break-word;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>display: none;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.loading {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>text-align: center;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #666;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-style: italic;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.error {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-left-color: #f44336;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background-color: #ffebee;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #c62828;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="container"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h1&gt;🔬 DOI Acknowledgement Finder&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;p style="text-align: center; color: #666;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Enter a DOI to extract acknowledgement and funding information</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/p&gt;</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="input-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label for="doiInput"&gt;DOI:&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>type="text"<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>id="doiInput"<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>placeholder="e.g., 10.1038/s41586-021-03819-2"</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button onclick="getAcknowledgement()" id="searchBtn"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Search</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/button&gt;</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="result"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const APIFY_TOKEN = 'apify_api_k7AcwDEd1p1rQNwo5mobjt9Xn0F8FL0OP2hr';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const ACTOR_ID = 'tomato_badge~doi-acknowledgement-scraper';</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>async function getAcknowledgement() {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const doi = document.getElementById('doiInput').value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const resultDiv = document.getElementById('result');</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const searchBtn = document.getElementById('searchBtn');</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>if (!doi) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>alert('Please enter a DOI');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Show loading state</p>
+<p class="p1"><span class="Apple-converted-space">            </span>resultDiv.style.display = 'block';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>resultDiv.className = 'loading';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>resultDiv.innerHTML = '⏳ Searching... This may take 10-30 seconds...';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>searchBtn.disabled = true;</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Start the Actor with proper input format</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const runResponse = await fetch(`https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`, {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>method: 'POST',</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>headers: {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>'Content-Type': 'application/json'</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>body: JSON.stringify({</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>doi: doi</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>})</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (!runResponse.ok) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const errorText = await runResponse.text();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>throw new Error(`Failed to start Actor (${runResponse.status}): ${errorText}`);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>const runData = await runResponse.json();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const runId = runData.data.id;</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>console.log('Actor started, run ID:', runId);</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Wait for the run to finish and get results</p>
+<p class="p1"><span class="Apple-converted-space">                </span>let attempts = 0;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const maxAttempts = 60; // 60 seconds max</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>while (attempts &lt; maxAttempts) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>await new Promise(resolve =&gt; setTimeout(resolve, 2000)); // Wait 2 seconds</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const statusResponse = await fetch(</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>`https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}?token=${APIFY_TOKEN}`</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>);</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const statusData = await statusResponse.json();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const status = statusData.data.status;</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>console.log('Status:', status);</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (status === 'SUCCEEDED') {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>// Get the results</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>const resultsResponse = await fetch(</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>`https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}/dataset/items?token=${APIFY_TOKEN}`</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>);</p>
+<p class="p2"><span class="Apple-converted-space">                        </span></p>
+<p class="p1">const results = await resultsResponse.json();</p>
+<p class="p2"><br></p>
+<p class="p1">console.log('Results:', results);</p>
+<p class="p2"><br></p>
+<p class="p1">if (results.length &gt; 0) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const acknowledgement = results[0].acknowledgement;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>resultDiv.className = '';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>resultDiv.innerHTML = acknowledgement;</p>
+<p class="p1">} else {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>resultDiv.className = 'error';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>resultDiv.innerHTML = 'No results found';</p>
+<p class="p1">}</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>break;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>} else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>throw new Error(`Actor run failed with status: ${status}`);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>attempts++;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (attempts &gt;= maxAttempts) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>throw new Error('Timeout: Actor took too long to complete');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>} catch (error) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>console.error('Error:', error);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>resultDiv.className = 'error';</p>
+<p class="p1"><span class="Apple-converted-space">                </span>resultDiv.innerHTML = `&lt;strong&gt;Error:&lt;/strong&gt;&lt;br&gt;${error.message}`;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>} finally {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>searchBtn.disabled = false;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Allow Enter key to trigger search</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('doiInput').addEventListener('keypress', function(event) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>if (event.key === 'Enter') {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>getAcknowledgement();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
