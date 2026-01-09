@@ -144,40 +144,53 @@
                 
                 console.log('Actor started, run ID:', runId);
                 
-                // Wait for the run to finish and get results
+                // Wait for the run to finish
                 let attempts = 0;
-                const maxAttempts = 60; // 60 seconds max
+                const maxAttempts = 60;
+                let statusData;
                 
                 while (attempts < maxAttempts) {
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     
                     const statusResponse = await fetch(
                         `https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}?token=${APIFY_TOKEN}`
                     );
                     
-                    const statusData = await statusResponse.json();
+                    statusData = await statusResponse.json();
                     const status = statusData.data.status;
                     
                     console.log('Status:', status);
                     
                     if (status === 'SUCCEEDED') {
-                        // Get the results
+                        // Get the results using dataset ID
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        
+                        const datasetId = statusData.data.defaultDatasetId;
+                        console.log('Dataset ID:', datasetId);
+                        
                         const resultsResponse = await fetch(
-                            `https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}/dataset/items?token=${APIFY_TOKEN}`
+                            `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
                         );
                         
-const results = await resultsResponse.json();
-
-console.log('Results:', results);
-
-if (results.length > 0) {
-    const acknowledgement = results[0].acknowledgement;
-    resultDiv.className = '';
-    resultDiv.innerHTML = acknowledgement;
-} else {
-    resultDiv.className = 'error';
-    resultDiv.innerHTML = 'No results found';
-}
+                        if (!resultsResponse.ok) {
+                            throw new Error(`Failed to fetch results (${resultsResponse.status})`);
+                        }
+                        
+                        const results = await resultsResponse.json();
+                        console.log('Results:', results);
+                        console.log('Results type:', typeof results);
+                        console.log('Is array?', Array.isArray(results));
+                        console.log('Length:', results.length);
+                        
+                        if (Array.isArray(results) && results.length > 0) {
+                            console.log('First result:', results[0]);
+                            const acknowledgement = results[0].acknowledgement;
+                            resultDiv.className = '';
+                            resultDiv.innerHTML = acknowledgement;
+                        } else {
+                            resultDiv.className = 'error';
+                            resultDiv.innerHTML = 'No results found';
+                        }
                         break;
                     } else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
                         throw new Error(`Actor run failed with status: ${status}`);
