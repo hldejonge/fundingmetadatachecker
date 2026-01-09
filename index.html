@@ -1,290 +1,447 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DOI Acknowledgement Finder</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Funding Metadata Checker</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+            min-height: 100vh;
+            padding: 2rem;
         }
+
         .container {
+            max-width: 1400px;
+            margin: 0 auto;
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 2rem;
         }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .input-group {
-            margin: 20px 0;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
+
+        h1 { font-size: 2rem; color: #1f2937; margin-bottom: 0.5rem; }
+        .subtitle { color: #6b7280; margin-bottom: 2rem; }
+
+        .input-group { margin-bottom: 1.5rem; }
+        label { display:block; font-size: .875rem; font-weight:500; color:#374151; margin-bottom:.5rem; }
+
+        .input-wrapper { display:flex; gap:.5rem; }
         input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
+            flex:1; padding:.75rem 1rem; border:1px solid #d1d5db; border-radius:8px; font-size:1rem; outline:none; transition:all .2s;
         }
+        input[type="text"]:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+
         button {
-            width: 100%;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
+            padding:.75rem 1.5rem; background:#3b82f6; color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:500;
+            cursor:pointer; transition:background .2s; display:flex; align-items:center; gap:.5rem;
         }
-        button:hover {
-            background-color: #45a049;
+        button:hover:not(:disabled){ background:#2563eb; }
+        button:disabled{ background:#9ca3af; cursor:not-allowed; }
+
+        .spinner { width:16px; height:16px; border:2px solid white; border-top-color:transparent; border-radius:50%; animation:spin .6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .alert { padding:1rem; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:start; gap:.75rem; }
+        .alert-error { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+        .alert-success { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+
+        .result-section { margin-bottom:1.5rem; }
+        .result-section h2 { font-size:1.125rem; font-weight:600; color:#1f2937; margin-bottom:.5rem; }
+        .result-section p { color:#374151; line-height:1.6; }
+
+        .doi-link { color:#3b82f6; text-decoration:underline; display:inline-flex; align-items:center; gap:.5rem; }
+        .doi-link:hover { color:#2563eb; }
+
+        .two-column-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1.5rem; }
+        @media (max-width:768px) { .two-column-grid { grid-template-columns:1fr; } }
+
+        .column-section { display:flex; flex-direction:column; }
+        .column-section h2 { font-size:1.125rem; font-weight:600; color:#1f2937; margin-bottom:.5rem; }
+
+        .funder-list { list-style:none; padding:0; margin:0; }
+
+        .funder-item {
+            padding:.75rem; background:#ffffff; border:1px solid #e6eefc; border-radius:8px; margin-bottom:.75rem;
+            box-shadow:0 1px 0 rgba(2,6,23,0.02); display:grid; gap:8px;
         }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-left: 4px solid #4CAF50;
-            border-radius: 5px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            display: none;
-        }
-        .loading {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-        }
-        .error {
-            border-left-color: #f44336;
-            background-color: #ffebee;
-            color: #c62828;
-        }
+        .funder-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .funder-label { min-width:120px; font-weight:600; color:#0f172a; }
+        .meta { display:flex; align-items:center; gap:8px; color:#0f172a; }
+        .status-icon { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:5px; font-weight:700; font-size:14px; line-height:1; }
+        .icon-yes { color:#065f46; } .icon-no { color:#991b1b; }
+        .status-value { font-size:.95rem; color:#111827; }
+        .meta .small { font-size:.9rem; color:#374151; }
+        .no-funding { font-style:italic; color:#6b7280; padding:1rem; background:#f8fafc; border-radius:8px; border:1px solid #eef2ff; }
+
+        .funder-name { font-weight:500; color:#1f2937; }
+        .funder-awards { font-size:.875rem; color:#6b7280; margin-top:.25rem; }
+
+        .acknowledgement-box { padding:1rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; flex:1; }
+        .acknowledgement-box p { white-space:pre-wrap; }
+
+        .funding-box { flex:1; }
+
+        .italic { font-style: italic; }
+        .text-amber { color:#b45309; }
+        .text-gray { color:#6b7280; }
+        .hidden { display:none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔬 DOI Acknowledgement Finder</h1>
-        <p style="text-align: center; color: #666;">
-            Enter a DOI to extract acknowledgement and funding information
-        </p>
-        
-        <div class="input-group">
-            <label for="doiInput">DOI:</label>
-            <input 
-                type="text" 
-                id="doiInput" 
-                placeholder="e.g., 10.1038/s41586-021-03819-2"
-            >
+<div class="container">
+    <h1>Funding Metadata Checker</h1>
+    <p class="subtitle">Enter a DOI to retrieve funding information from the acknowledgement text in the article and funding metadata registered with Crossref</p>
+
+    <div class="input-group">
+        <label for="doi-input">DOI (e.g., 10.3389/fchem.2023.1148629)</label>
+        <div class="input-wrapper">
+            <input type="text" id="doi-input" placeholder="Enter DOI or full DOI URL" onkeypress="if(event.key === 'Enter') checkFunding()">
+            <button id="check-btn" onclick="checkFunding()">
+                <span id="btn-icon">🔍</span>
+                <span id="btn-text">Check</span>
+            </button>
         </div>
-        
-        <button onclick="getAcknowledgement()" id="searchBtn">
-            Search
-        </button>
-        
-        <div id="result"></div>
     </div>
 
-    <script>
-        const SCRAPINGBEE_API_KEY = 'ZOLO8U5NQBWC692V7TP5DIZMLLZNEEWGXZPLKIQ0HSN1UE8TZGOK6J3ZQQ0EZUIDSV50GRPISA51FTP4';
+    <div id="error-alert" class="alert alert-error hidden">
+        <span>⚠️</span>
+        <p id="error-message"></p>
+    </div>
 
-        async function getAcknowledgement() {
-            const doi = document.getElementById('doiInput').value.trim();
-            const resultDiv = document.getElementById('result');
-            const searchBtn = document.getElementById('searchBtn');
+    <div id="results" class="hidden">
+        <div class="alert alert-success">
+            <span>✓</span>
+            <p>Article information retrieved successfully</p>
+        </div>
+
+        <div class="result-section">
+            <h2>Title</h2>
+            <p id="result-title"></p>
+        </div>
+
+        <div class="result-section">
+            <h2>DOI Link</h2>
+            <a id="result-link" href="#" target="_blank" rel="noopener noreferrer" class="doi-link">
+                <span id="result-link-text"></span>
+                <span>↗</span>
+            </a>
+        </div>
+
+        <div class="two-column-grid">
+            <div class="column-section">
+                <h2>Acknowledgement section extracted from fulltext</h2>
+                <div class="acknowledgement-box">
+                    <p id="acknowledgement-text"></p>
+                </div>
+            </div>
+
+            <div class="column-section">
+                <h2>Funding Metadata registered with Crossref</h2>
+                <div class="funding-box" id="funding-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------------- ScrapingBee Configuration ----------------
+    const SCRAPINGBEE_API_KEY = 'ZOLO8U5NQBWC692V7TP5DIZMLLZNEEWGXZPLKIQ0HSN1UE8TZGOK6J3ZQQ0EZUIDSV50GRPISA51FTP4';
+
+    // ---------------- Helper Functions ----------------
+    function escapeHtml(str) {
+        if (str === undefined || str === null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function normalizeDoi(val) {
+        if (!val) return '';
+        return val.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+    }
+
+    // ---------------- ScrapingBee Acknowledgement Extraction ----------------
+    async function GET_ACKNOWLEDGEMENT3(doi) {
+        if (!doi) return 'Error: No DOI provided';
+        
+        const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+        
+        try {
+            // Build ScrapingBee URL
+            const targetUrl = `https://doi.org/${cleanDoi}`;
+            const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?` +
+                `api_key=${SCRAPINGBEE_API_KEY}` +
+                `&url=${encodeURIComponent(targetUrl)}` +
+                `&render_js=false` +
+                `&premium_proxy=false`;
             
-            if (!doi) {
-                alert('Please enter a DOI');
-                return;
+            console.log('Fetching acknowledgement for:', cleanDoi);
+            
+            // Fetch via ScrapingBee
+            const response = await fetch(scrapingBeeUrl);
+            
+            if (!response.ok) {
+                return `Error: ScrapingBee returned status ${response.status}`;
             }
             
-            // Clean DOI
-            const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+            let html = await response.text();
+            html = html.replace(/[\r\n]+/g, ' ');
             
-            // Show loading state
-            resultDiv.style.display = 'block';
-            resultDiv.className = 'loading';
-            resultDiv.innerHTML = '⏳ Searching... This may take 5-15 seconds...';
-            searchBtn.disabled = true;
+            console.log('HTML received, length:', html.length);
             
-            try {
-                // Build ScrapingBee URL
-                const targetUrl = `https://doi.org/${cleanDoi}`;
-                const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?` +
-                    `api_key=${SCRAPINGBEE_API_KEY}` +
-                    `&url=${encodeURIComponent(targetUrl)}` +
-                    `&render_js=false` +
-                    `&premium_proxy=false`;
+            // Extract acknowledgement and funding
+            const sections = { acknowledgement: [], funding: [] };
+            const seenContentHashes = {};
+            
+            // 1. Heading-based extraction
+            const headingRegex = /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi;
+            const headings = [];
+            let match;
+            
+            while ((match = headingRegex.exec(html)) !== null) {
+                headings.push({
+                    level: parseInt(match[1]),
+                    text: match[2],
+                    start: match.index,
+                    end: headingRegex.lastIndex
+                });
+            }
+            headings.push({ start: html.length, level: 0 });
+            
+            for (let i = 0; i < headings.length - 1; i++) {
+                const current = headings[i];
+                const next = headings[i + 1];
                 
-                console.log('Fetching:', targetUrl);
+                const label = current.text.replace(/<[^>]+>/g, '').trim().toLowerCase();
+                const isAck = /acknowledgement?s?|acknowledgment?s?/.test(label);
+                const isFund = /funding/.test(label);
                 
-                // Fetch via ScrapingBee
-                const response = await fetch(scrapingBeeUrl);
+                if (!isAck && !isFund) continue;
                 
-                if (!response.ok) {
-                    throw new Error(`ScrapingBee returned status ${response.status}`);
+                const contentHtml = html.substring(current.end, next.start).trim();
+                let cleaned = contentHtml.replace(/<[^>]+>/g, ' ')
+                    .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                
+                if (cleaned.length < 20) continue;
+                
+                const hash = cleaned.substring(0, 300);
+                if (seenContentHashes[hash]) continue;
+                seenContentHashes[hash] = true;
+                
+                if (isAck && isFund) {
+                    sections.acknowledgement.push(cleaned);
+                    sections.funding.push(cleaned);
+                } else if (isAck) {
+                    sections.acknowledgement.push(cleaned);
+                } else if (isFund) {
+                    sections.funding.push(cleaned);
                 }
+            }
+            
+            // 2. Container fallback
+            if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {
+                const containerPatterns = [
+                    /<section[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+                    /<div[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                    /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                    /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+                    /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
+                ];
                 
-                let html = await response.text();
-                html = html.replace(/[\r\n]+/g, ' ');
-                
-                console.log('HTML received, length:', html.length);
-                
-                // Extract acknowledgement and funding
-                const sections = { acknowledgement: [], funding: [] };
-                const seenContentHashes = {};
-                
-                // 1. Heading-based extraction
-                const headingRegex = /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi;
-                const headings = [];
-                let match;
-                
-                while ((match = headingRegex.exec(html)) !== null) {
-                    headings.push({
-                        level: parseInt(match[1]),
-                        text: match[2],
-                        start: match.index,
-                        end: headingRegex.lastIndex
-                    });
-                }
-                headings.push({ start: html.length, level: 0 });
-                
-                for (let i = 0; i < headings.length - 1; i++) {
-                    const current = headings[i];
-                    const next = headings[i + 1];
+                for (const pattern of containerPatterns) {
+                    const matches = html.match(pattern);
+                    if (!matches) continue;
                     
-                    const label = current.text.replace(/<[^>]+>/g, '').trim().toLowerCase();
-                    const isAck = /acknowledgement?s?|acknowledgment?s?/.test(label);
-                    const isFund = /funding/.test(label);
-                    
-                    if (!isAck && !isFund) continue;
-                    
-                    const contentHtml = html.substring(current.end, next.start).trim();
-                    let cleaned = contentHtml.replace(/<[^>]+>/g, ' ')
-                        .replace(/&[a-z]+;|&#\d+;/gi, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    
-                    if (cleaned.length < 20) continue;
-                    
-                    const hash = cleaned.substring(0, 300);
-                    if (seenContentHashes[hash]) continue;
-                    seenContentHashes[hash] = true;
-                    
-                    if (isAck && isFund) {
-                        sections.acknowledgement.push(cleaned);
-                        sections.funding.push(cleaned);
-                    } else if (isAck) {
-                        sections.acknowledgement.push(cleaned);
-                    } else if (isFund) {
-                        sections.funding.push(cleaned);
-                    }
-                }
-                
-                // 2. Container fallback
-                if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {
-                    const containerPatterns = [
-                        /<section[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
-                        /<div[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                        /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                        /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
-                        /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                        /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
-                    ];
-                    
-                    for (const pattern of containerPatterns) {
-                        const matches = html.match(pattern);
-                        if (!matches) continue;
+                    for (const matchText of matches) {
+                        let cleaned = matchText.replace(/<[^>]+>/g, ' ')
+                            .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
                         
-                        for (const matchText of matches) {
-                            let cleaned = matchText.replace(/<[^>]+>/g, ' ')
-                                .replace(/&[a-z]+;|&#\d+;/gi, ' ')
-                                .replace(/\s+/g, ' ')
-                                .trim();
-                            
-                            if (cleaned.length < 20) continue;
-                            
-                            const hash = cleaned.substring(0, 300);
-                            if (seenContentHashes[hash]) continue;
-                            seenContentHashes[hash] = true;
-                            
-                            const isAck = /acknowledgement?s?|acknowledgment?s?/.test(matchText);
-                            const isFund = /funding/.test(matchText);
-                            
-                            if (isAck && isFund) {
-                                sections.acknowledgement.push(cleaned);
-                                sections.funding.push(cleaned);
-                            } else if (isAck) {
-                                sections.acknowledgement.push(cleaned);
-                            } else if (isFund) {
-                                sections.funding.push(cleaned);
-                            }
+                        if (cleaned.length < 20) continue;
+                        
+                        const hash = cleaned.substring(0, 300);
+                        if (seenContentHashes[hash]) continue;
+                        seenContentHashes[hash] = true;
+                        
+                        const isAck = /acknowledgement?s?|acknowledgment?s?/.test(matchText);
+                        const isFund = /funding/.test(matchText);
+                        
+                        if (isAck && isFund) {
+                            sections.acknowledgement.push(cleaned);
+                            sections.funding.push(cleaned);
+                        } else if (isAck) {
+                            sections.acknowledgement.push(cleaned);
+                        } else if (isFund) {
+                            sections.funding.push(cleaned);
                         }
                     }
                 }
-                
-                // 3. Select longest result
-                function selectLongest(arr) {
-                    if (!arr || arr.length === 0) return null;
-                    return arr.reduce((max, current) => current.length > max.length ? current : max, '');
-                }
-                
-                const ackText = selectLongest(sections.acknowledgement);
-                const fundText = selectLongest(sections.funding);
-                
-                let result = '';
-                if (ackText && fundText) {
-                    result = ackText + "\n\nFunding:\n" + fundText;
-                } else if (ackText) {
-                    result = ackText;
-                } else if (fundText) {
-                    result = fundText;
-                } else {
-                    result = "No acknowledgement section found";
-                }
-                
-                if (result.length > 5000) {
-                    result = result.substring(0, 5000) + "...";
-                }
-                
-                console.log('Result found:', result.substring(0, 100) + '...');
-                
-                // Display result
-                resultDiv.className = '';
-                resultDiv.innerHTML = result;
-                
-            } catch (error) {
-                console.error('Error:', error);
-                resultDiv.className = 'error';
-                resultDiv.innerHTML = `<strong>Error:</strong><br>${error.message}`;
-            } finally {
-                searchBtn.disabled = false;
             }
+            
+            // 3. Select longest result
+            function selectLongest(arr) {
+                if (!arr || arr.length === 0) return null;
+                return arr.reduce((max, current) => current.length > max.length ? current : max, '');
+            }
+            
+            const ackText = selectLongest(sections.acknowledgement);
+            const fundText = selectLongest(sections.funding);
+            
+            let result = '';
+            if (ackText && fundText) {
+                result = ackText + "\n\nFunding:\n" + fundText;
+            } else if (ackText) {
+                result = ackText;
+            } else if (fundText) {
+                result = fundText;
+            } else {
+                result = "No acknowledgement section found";
+            }
+            
+            if (result.length > 5000) {
+                result = result.substring(0, 5000) + "...";
+            }
+            
+            console.log('Acknowledgement extracted:', result.substring(0, 100) + '...');
+            return result;
+            
+        } catch (error) {
+            console.error('Error in GET_ACKNOWLEDGEMENT3:', error);
+            return `Error: ${error.message}`;
         }
-        
-        // Allow Enter key to trigger search
-        document.getElementById('doiInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                getAcknowledgement();
+    }
+
+    // ---------------- Helper to extract Funder ID ----------------
+    function getFunderId(f) {
+        if (f.DOI) return f.DOI;
+        if (typeof f.id === 'string') return f.id;
+        if (f.id && f.id.id) return f.id.id;
+        if (f.identifier && typeof f.identifier === 'string') return f.identifier;
+        if (f.identifier && f.identifier.value) return f.identifier.value;
+        return null;
+    }
+
+    // ---------------- Main Function ----------------
+    async function checkFunding() {
+        const doiInput = document.getElementById('doi-input');
+        const doi = doiInput.value.trim();
+        const errorAlert = document.getElementById('error-alert');
+        const errorMessage = document.getElementById('error-message');
+        const results = document.getElementById('results');
+        const checkBtn = document.getElementById('check-btn');
+        const btnIcon = document.getElementById('btn-icon');
+        const btnText = document.getElementById('btn-text');
+
+        if (!doi) {
+            errorMessage.textContent = 'Please enter a DOI';
+            errorAlert.classList.remove('hidden');
+            return;
+        }
+
+        checkBtn.disabled = true;
+        btnIcon.innerHTML = '<div class="spinner"></div>';
+        btnText.textContent = 'Checking...';
+        errorAlert.classList.add('hidden');
+        results.classList.add('hidden');
+
+        try {
+            const cleanDoi = normalizeDoi(doi);
+            const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`);
+            if (!response.ok) throw new Error('Could not fetch DOI information from Crossref API (HTTP ' + response.status + ')');
+            const data = await response.json();
+            const work = data.message || {};
+            const acknowledgement = await GET_ACKNOWLEDGEMENT3(doi);
+
+            document.getElementById('result-title').textContent = work.title?.[0] || 'N/A';
+            const doiLink = work.URL || `https://doi.org/${cleanDoi}`;
+            document.getElementById('result-link').href = doiLink;
+            document.getElementById('result-link-text').textContent = doiLink;
+
+            const ackText = document.getElementById('acknowledgement-text');
+            if (typeof acknowledgement === 'string' && acknowledgement.startsWith('Error:')) ackText.className = 'italic text-amber';
+            else ackText.className = '';
+            ackText.textContent = acknowledgement;
+
+            // ---------------- Render Funding ----------------
+            const fundingContainer = document.getElementById('funding-container');
+            if (work.funder && Array.isArray(work.funder) && work.funder.length > 0) {
+                const itemsHtml = work.funder.map(f => {
+                    const namePresent = !!(f.name && f.name.trim());
+                    const safeName = namePresent ? escapeHtml(f.name) : 'No funder name';
+
+                    const funderId = getFunderId(f);
+                    const idPresent = !!(funderId && String(funderId).trim());
+
+                    let idHref = null;
+                    if (idPresent) {
+                        const idStr = String(funderId).trim();
+                        if (/^https?:\/\//i.test(idStr)) idHref = idStr;
+                        else if (/^10\.\d+\/\S+/.test(idStr)) idHref = 'https://doi.org/' + encodeURIComponent(idStr);
+                        else if (/^doi:\s*/i.test(idStr)) idHref = 'https://doi.org/' + encodeURIComponent(idStr.replace(/^doi:\s*/i, ''));
+                    }
+
+                    const safeIdHtml = idPresent
+                        ? (idHref ? `<a href="${escapeHtml(idHref)}" target="_blank" rel="noopener noreferrer">${escapeHtml(funderId)}</a>` : escapeHtml(funderId))
+                        : 'No Funder ID';
+
+                    const awards = Array.isArray(f.award) ? f.award.filter(a => a && a.trim()) : [];
+                    const awardsPresent = awards.length > 0;
+                    const safeAwards = awardsPresent ? awards.map(a => escapeHtml(a)).join(', ') : 'No award registered';
+
+                    return `
+                        <li class="funder-item" role="group" aria-label="Funder">
+                            <div class="funder-row">
+                                <div class="funder-label">Funder name:</div>
+                                <div class="meta">
+                                    <span class="status-icon ${namePresent ? 'icon-yes' : 'icon-no'}" aria-hidden="true">${namePresent ? '✓' : '✗'}</span>
+                                    <div class="status-value">${safeName}</div>
+                                </div>
+                            </div>
+                            <div class="funder-row">
+                                <div class="funder-label">Funder ID:</div>
+                                <div class="meta">
+                                    <span class="status-icon ${idPresent ? 'icon-yes' : 'icon-no'}" aria-hidden="true">${idPresent ? '✓' : '✗'}</span>
+                                    <div class="status-value">${safeIdHtml}</div>
+                                </div>
+                            </div>
+                            <div class="funder-row">
+                                <div class="funder-label">Award:</div>
+                                <div class="meta">
+                                    <span class="status-icon ${awardsPresent ? 'icon-yes' : 'icon-no'}" aria-hidden="true">${awardsPresent ? '✓' : '✗'}</span>
+                                    <div class="status-value">${safeAwards}</div>
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                }).join('\n');
+
+                fundingContainer.innerHTML = '<ul class="funder-list">' + itemsHtml + '</ul>';
+            } else {
+                fundingContainer.innerHTML = '<div class="no-funding">No funding information available from Crossref</div>';
             }
-        });
-    </script>
+
+            results.classList.remove('hidden');
+
+        } catch (err) {
+            errorMessage.textContent = 'An error occurred: ' + (err?.message || String(err));
+            errorAlert.classList.remove('hidden');
+        } finally {
+            checkBtn.disabled = false;
+            btnIcon.textContent = '🔍';
+            btnText.textContent = 'Check';
+        }
+    }
+</script>
 </body>
 </html>
