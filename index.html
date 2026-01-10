@@ -179,7 +179,7 @@
             const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?` +
                 `api_key=${SCRAPINGBEE_API_KEY}` +
                 `&url=${encodeURIComponent(targetUrl)}` +
-                `&render_js=true` +
+                `&render_js=false` +
                 `&premium_proxy=false`;
             
             console.log('Fetching acknowledgement for:', cleanDoi);
@@ -255,9 +255,7 @@
                     /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
                     /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
                     /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                        // NIEUW: Pattern voor funding-source spans
-                    /<p[^>]*>[\s\S]*?<span[^>]*class="[^"]*funding-source[^"]*"[^>]*>[\s\S]*?<\/span>[\s\S]*?<\/p>/gi
+                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
                 ];
                 
                 for (const pattern of containerPatterns) {
