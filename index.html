@@ -255,7 +255,9 @@
                     /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
                     /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
                     /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
+                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                        // NIEUW: Pattern voor funding-source spans
+                    /<p[^>]*>[\s\S]*?<span[^>]*class="[^"]*funding-source[^"]*"[^>]*>[\s\S]*?<\/span>[\s\S]*?<\/p>/gi
                 ];
                 
                 for (const pattern of containerPatterns) {
