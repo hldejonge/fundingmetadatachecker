@@ -147,6 +147,9 @@
     </div>
 </div>
 
+<!-- Load patterns from external file -->
+<script src="patterns.js"></script>
+
 <script>
     // ---------------- ScrapingBee Configuration ----------------
     const SCRAPINGBEE_API_KEY = 'ZOLO8U5NQBWC692V7TP5DIZMLLZNEEWGXZPLKIQ0HSN1UE8TZGOK6J3ZQQ0EZUIDSV50GRPISA51FTP4';
@@ -249,14 +252,8 @@
             
             // 2. Container fallback
             if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {
-                const containerPatterns = [
-                    /<section[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
-                    /<div[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                    /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                    /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
-                    /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
-                ];
+                // Use patterns from external file
+                const containerPatterns = CONTAINER_PATTERNS;
                 
                 for (const pattern of containerPatterns) {
                     const matches = html.match(pattern);
