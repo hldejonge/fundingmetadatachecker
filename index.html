@@ -179,7 +179,7 @@
             const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?` +
                 `api_key=${SCRAPINGBEE_API_KEY}` +
                 `&url=${encodeURIComponent(targetUrl)}` +
-                `&render_js=false` +
+                `&render_js=true` +
                 `&premium_proxy=false`;
             
             console.log('Fetching acknowledgement for:', cleanDoi);
