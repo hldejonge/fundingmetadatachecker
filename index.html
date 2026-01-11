@@ -236,6 +236,23 @@
             line-height: 1.6;
         }
 
+        .article-info-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .article-info-box h2 {
+            margin-bottom: 0;
+        }
+
+        .article-title-text {
+            color: var(--text-dark);
+            font-size: 1.1em;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
         .doi-link {
             display: inline-flex;
             align-items: center;
@@ -501,13 +518,9 @@
             <p>Article information retrieved successfully</p>
         </div>
 
-        <div class="result-section">
-            <h2>Title</h2>
-            <p id="result-title"></p>
-        </div>
-
-        <div class="result-section">
-            <h2>DOI Link</h2>
+        <div class="result-section article-info-box">
+            <h2>Article Information</h2>
+            <div class="article-title-text" id="result-title"></div>
             <a id="result-link" href="#" target="_blank" rel="noopener noreferrer" class="doi-link">
                 <span id="result-link-text"></span>
                 <span>↗</span>
