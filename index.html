@@ -480,7 +480,7 @@
         
         <div class="input-group">
             <div class="input-wrapper">
-                <input type="text" id="doi-input" placeholder="Enter DOI (e.g., 10.3389/fchem.2023.1148629)" onkeypress="if(event.key === 'Enter') checkFunding()">
+                <input type="text" id="doi-input" placeholder="Enter DOI (e.g., 10.1093/reseval/rvaa038)" onkeypress="if(event.key === 'Enter') checkFunding()">
                 <button id="check-btn" onclick="checkFunding()">
                     <span id="btn-icon">🔍</span>
                     <span id="btn-text">Check</span>
@@ -543,195 +543,30 @@
 <script src="patterns.js"></script>
 
 <script>
-    // ---------------- Gist Cache Configuration ----------------
-    const GIST_ID = '409094373844ce8fa20c8ccdc6d3b599';
-    const GITHUB_TOKEN = 'YOUR_NEW_TOKEN_HERE'; // VERVANG DIT met je NIEUWE token!
-    const CACHE_EXPIRY_DAYS = 30; // Cache blijft 30 dagen geldig
-
-    // ---------------- Gist Cache Functions ----------------
-    let gistCache = null;
-    let gistEtag = null;
-
-    async function loadGistCache() {
-        try {
-            console.log('Loading cache from Gist...');
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-            
-            if (!response.ok) {
-                console.error('Failed to load Gist:', response.status);
-                return null;
-            }
-            
-            const gist = await response.json();
-            gistEtag = response.headers.get('etag');
-            
-            const cacheFile = gist.files['doi-cache.json'];
-            if (!cacheFile) {
-                console.warn('doi-cache.json not found in Gist');
-                return { cache_version: "1.0", dois: {} };
-            }
-            
-            const cacheData = JSON.parse(cacheFile.content);
-            console.log('Gist cache loaded:', Object.keys(cacheData.dois || {}).length, 'DOIs cached');
-            return cacheData;
-            
-        } catch (error) {
-            console.error('Error loading Gist cache:', error);
-            return null;
-        }
-    }
-
-    async function saveToGistCache(doi, data) {
-        try {
-            if (!gistCache) {
-                gistCache = await loadGistCache();
-            }
-            
-            if (!gistCache) {
-                console.warn('Cannot save to cache - cache not loaded');
-                return false;
-            }
-            
-            // Add new DOI to cache
-            gistCache.dois[doi] = {
-                ...data,
-                cached_at: new Date().toISOString()
-            };
-            
-            console.log('Saving to Gist cache...');
-            
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    files: {
-                        'doi-cache.json': {
-                            content: JSON.stringify(gistCache, null, 2)
-                        }
-                    }
-                })
-            });
-            
-            if (!response.ok) {
-                console.error('Failed to save to Gist:', response.status);
-                return false;
-            }
-            
-            console.log('✓ Saved to Gist cache');
-            return true;
-            
-        } catch (error) {
-            console.error('Error saving to Gist cache:', error);
-            return false;
-        }
-    }
-
-    async function getFromGistCache(doi) {
-        try {
-            if (!gistCache) {
-                gistCache = await loadGistCache();
-            }
-            
-            if (!gistCache || !gistCache.dois) {
-                return null;
-            }
-            
-            const cached = gistCache.dois[doi];
-            if (!cached) {
-                return null;
-            }
-            
-            // Check if cache is still valid
-            const cachedDate = new Date(cached.cached_at);
-            const now = new Date();
-            const daysDiff = (now - cachedDate) / (1000 * 60 * 60 * 24);
-            
-            if (daysDiff > CACHE_EXPIRY_DAYS) {
-                console.log('Cache expired for:', doi);
-                return null;
-            }
-            
-            console.log('✓ Cache hit for:', doi, '(cached', Math.floor(daysDiff), 'days ago)');
-            return cached;
-            
-        } catch (error) {
-            console.error('Error reading from Gist cache:', error);
-            return null;
-        }
-    }
-
-    async function logQuery(doi, cacheHit) {
-        try {
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-            if (!response.ok) return;
-            
-            const gist = await response.json();
-            const logFile = gist.files['query-log.json'];
-            
-            let logData;
-            if (logFile) {
-                logData = JSON.parse(logFile.content);
-            } else {
-                logData = { log_version: "1.0", queries: [] };
-            }
-            
-            logData.queries.push({
-                doi: doi,
-                timestamp: new Date().toISOString(),
-                cache_hit: cacheHit
-            });
-            
-            // Keep only last 1000 queries
-            if (logData.queries.length > 1000) {
-                logData.queries = logData.queries.slice(-1000);
-            }
-            
-            await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    files: {
-                        'query-log.json': {
-                            content: JSON.stringify(logData, null, 2)
-                        }
-                    }
-                })
-            });
-            
-        } catch (error) {
-            console.error('Error logging query:', error);
-        }
-    }
-
-    // ---------------- In-Memory Cache (fallback) ----------------
-    const memoryCache = new Map();
-    const MEMORY_CACHE_DURATION = 3600000; // 1 hour in milliseconds
+    // ---------------- In-Memory Cache ----------------
+    const resultCache = new Map();
+    const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
     function getCachedResult(doi) {
-        const cached = memoryCache.get(doi);
+        const cached = resultCache.get(doi);
         if (!cached) return null;
         
         const now = Date.now();
-        if (now - cached.timestamp > MEMORY_CACHE_DURATION) {
-            memoryCache.delete(doi);
+        if (now - cached.timestamp > CACHE_DURATION) {
+            resultCache.delete(doi);
             return null;
         }
         
-        console.log('Using memory cache for:', doi);
+        console.log('Using cached result for:', doi);
         return cached.data;
     }
 
     function setCachedResult(doi, data) {
-        memoryCache.set(doi, {
+        resultCache.set(doi, {
             data: data,
             timestamp: Date.now()
         });
+        console.log('Cached result for:', doi);
     }
 
     // ---------------- ScrapingBee Configuration ----------------
@@ -931,23 +766,13 @@
 
         const cleanDoi = normalizeDoi(doi);
 
-        // Check memory cache first (fastest)
-        const memoryCached = getCachedResult(cleanDoi);
-        if (memoryCached) {
-            displayResults(memoryCached);
+        // Check cache first
+        const cachedData = getCachedResult(cleanDoi);
+        if (cachedData) {
+            displayResults(cachedData);
             return;
         }
 
-        // Check Gist cache second
-        const gistCached = await getFromGistCache(cleanDoi);
-        if (gistCached) {
-            await logQuery(cleanDoi, true);
-            displayResults(gistCached);
-            setCachedResult(cleanDoi, gistCached); // Also cache in memory
-            return;
-        }
-
-        // No cache hit - fetch from APIs
         checkBtn.disabled = true;
         btnIcon.innerHTML = '<div class="spinner"></div>';
         btnText.textContent = 'Checking...';
@@ -968,10 +793,8 @@
                 funders: work.funder || []
             };
 
-            // Save to all caches
-            setCachedResult(cleanDoi, resultData); // Memory cache
-            await saveToGistCache(cleanDoi, resultData); // Gist cache
-            await logQuery(cleanDoi, false); // Log as cache miss
+            // Cache the result
+            setCachedResult(cleanDoi, resultData);
 
             displayResults(resultData);
 
