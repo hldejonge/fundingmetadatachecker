@@ -755,7 +755,7 @@
     // ---------------- Main Function ----------------
     async function checkFunding() {
         const doiInput = document.getElementById('doi-input');
-        const doi = doiInput.value.trim();
+        let doi = doiInput.value.trim();
         const errorAlert = document.getElementById('error-alert');
         const errorMessage = document.getElementById('error-message');
         const results = document.getElementById('results');
@@ -763,10 +763,10 @@
         const btnIcon = document.getElementById('btn-icon');
         const btnText = document.getElementById('btn-text');
 
+        // Use default DOI if none is entered
         if (!doi) {
-            errorMessage.textContent = 'Please enter a DOI';
-            errorAlert.classList.remove('hidden');
-            return;
+            doi = '10.1093/reseval/rvaa038';
+            doiInput.value = doi;
         }
 
         const cleanDoi = normalizeDoi(doi);
