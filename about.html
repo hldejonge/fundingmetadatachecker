@@ -252,7 +252,7 @@
             <h2 id="problem">What's the problem?</h2>
             <p>The importance of openly available metadata about research funding is widely recognized. This matters for research transparency: how and by which organizations was research funded? But it's also crucial for tracking research funding impact: what outcomes actually result from research investments? Research funders are increasingly asked to account for this.</p>
             
-            <p>Since 2013, Crossref has offered its members the ability to deposit funding information as part of a publication's DOI metadata. However, even after more than ten years, this information remains highly incomplete. Some publishers deposit funding information for all their publications, but many do so only for some of their journals, or not at all.</p>
+            <p>Since 2013, Crossref has offered its members the ability to deposit funding information as part of a publication's DOI metadata. However, it is known that this information remains highly incomplete. Some publishers deposit funding information for all their publications, but many do so only for some of their journals, or not at all.</p>
             
             <p>This is despite the fact that publishers often have access to this information—authors typically include it in their paper's acknowledgement section to meet funder requirements. It's estimated that in <strong>25% of cases</strong>, publishers fail to transfer this information to Crossref.</p>
             
@@ -263,7 +263,7 @@
             </div>
 
             <h2 id="why">Why this matters</h2>
-            <p>Complete and accurate funding metadata enables:</p>
+            <p>Complete and accurate open funding metadata enables:</p>
             <ul>
                 <li><strong>Better research discovery</strong>: Funders and institutions can identify all outputs from their investments</li>
                 <li><strong>Accountability and impact assessment</strong>: Research organizations can demonstrate the outcomes of their funding</li>
@@ -276,26 +276,26 @@
 
             <h2 id="how">How it works</h2>
             <p>The tool is straightforward:</p>
-            <ol>
+            <ul>
                 <li>Enter a DOI</li>
                 <li>The tool attempts to retrieve the article's fulltext and extract the funding acknowledgement section</li>
                 <li>Simultaneously, it queries Crossref for funding metadata</li>
                 <li>Both are displayed side by side</li>
-            </ol>
+            </ul>
             
             <p><strong>Crossref metadata shows:</strong></p>
             <ul>
-                <li><strong>Funder name</strong> (as registered)</li>
-                <li><strong>Funder ID</strong> (persistent identifier for the funding organization)</li>
+                <li><strong>Funder_name</strong> (as registered)</li>
+                <li><strong>Funder_ID</strong> (persistent identifier for the funding organization)</li>
                 <li><strong>Award</strong> (grant number or grant ID)</li>
             </ul>
 
             <h2 id="understanding">Understanding the results</h2>
             <p><strong>When results differ, several scenarios are possible:</strong></p>
             
-            <p><strong>Acknowledgement shown, but no Crossref metadata:</strong> The article contains a funding section, but the publisher has not extracted this information (or did so incompletely) and has not passed it to Crossref. Many publishers use third-party providers for this extraction.</p>
+            <p><strong>Acknowledgement shown, but no Crossref metadata:</strong> The article contains a funding section, but the publisher has not extracted this information (or did so incompletely) and has not passed it to Crossref. Many publishers rely on third-party providers for this extraction.</p>
             
-            <p><strong>No acknowledgement shown, but Crossref metadata present:</strong> The tool likely couldn't locate the acknowledgement section. See Limitations below.</p>
+            <p><strong>No acknowledgement shown, but Crossref metadata present:</strong> The tool likely couldn't extract the acknowledgement section. See Limitations below.</p>
 
             <h2 id="action">What you can do</h2>
             
@@ -322,15 +322,15 @@
 
             <h3>If you're a librarian or research administrator:</h3>
             <ul>
-                <li>Use this tool to audit institutional research outputs</li>
-                <li>Advocate for better metadata practices with publishers</li>
+                <li>Use this tool to check institutional research outputs</li>
+                <li>Advocate for better metadata practices with publishers in publisher negotiations</li>
                 <li>Support researchers in ensuring their funding is properly acknowledged</li>
             </ul>
 
             <h2 id="limitations">Limitations</h2>
             <p>The Funding Metadata Checker scrapes the <strong>HTML version</strong> of articles, not PDFs. It works best with <strong>open access articles</strong>, though sometimes funding acknowledgements on paywalled article landing pages are also accessible and will be displayed.</p>
             
-            <p>Some publishers actively block scraping of their landing pages or encrypt article HTML, preventing extraction. For these articles, the tool will return an error message. This doesn't necessarily mean the article lacks funding metadata.</p>
+            <p>Some publishers actively block scraping of their article landing pages or encrypt article HTML, preventing extraction. For these articles, the tool will return an error message. This doesn't necessarily mean the article lacks funding metadata.</p>
             
             <p>The completeness and quality of Crossref metadata depends entirely on what publishers deposit.</p>
 
