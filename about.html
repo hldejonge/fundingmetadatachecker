@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>About - Funding Metadata Checker</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #4A6FA5;
+            --light-blue: #6B8EC4;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e1e8ed;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #e8eef3 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+            opacity: 0.9;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        header h1 {
+            color: var(--primary-blue);
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        nav a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        /* Content Card */
+        .content {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+        }
+
+        /* Typography */
+        h2 {
+            color: var(--primary-blue);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-top: 2em;
+            margin-bottom: 0.75em;
+            padding-bottom: 0.5em;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h2:first-child {
+            margin-top: 0;
+        }
+
+        h3 {
+            color: var(--text-dark);
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        p {
+            margin-bottom: 1em;
+            line-height: 1.7;
+        }
+
+        ul {
+            margin-bottom: 1em;
+            margin-left: 1.5em;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+            line-height: 1.6;
+        }
+
+        strong {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Highlight boxes */
+        .highlight {
+            background: rgba(74, 111, 165, 0.08);
+            border-left: 4px solid var(--primary-blue);
+            padding: 15px 20px;
+            margin: 1.5em 0;
+            border-radius: 4px;
+        }
+
+        .highlight p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 25px;
+            margin-bottom: 2em;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            font-size: 1em;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .toc ul {
+            margin: 0;
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 0.4em;
+        }
+
+        .toc a {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .toc a:hover {
+            color: var(--primary-blue);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 25px;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="logo.png" alt="Funding Metadata Checker Logo">
+            </div>
+            <h1>About the Funding Metadata Checker</h1>
+        </header>
+
+        <nav>
+            <a href="https://hldejonge.github.io/fundingmetadatachecker/">← Back to Checker</a>
+        </nav>
+
+        <div class="content">
+            <h2 id="problem">What's the problem?</h2>
+            <p>The importance of openly available metadata about research funding is widely recognized. This matters for research transparency: how and by which organizations was research funded? But it's also crucial for tracking research funding impact: what outcomes actually result from research investments? Research funders are increasingly asked to account for this.</p>
+            
+            <p>Since 2013, Crossref has offered its members the ability to deposit funding information as part of a publication's DOI metadata. However, even after more than ten years, this information remains highly incomplete. Some publishers deposit funding information for all their publications, but many do so only for some of their journals, or not at all.</p>
+            
+            <p>This is despite the fact that publishers often have access to this information—authors typically include it in their paper's acknowledgement section to meet funder requirements. It's estimated that in <strong>25% of cases</strong>, publishers fail to transfer this information to Crossref.</p>
+            
+            <p>The Funding Metadata Checker is a tool that makes it easy to identify discrepancies between what's included in the funding acknowledgement and what's been deposited with Crossref.</p>
+            
+            <div class="highlight">
+                <p><strong>Who is this for?</strong> Researchers, research funders, libraries, and publishers who value high-quality open funding metadata.</p>
+            </div>
+
+            <h2 id="why">Why this matters</h2>
+            <p>Complete and accurate funding metadata enables:</p>
+            <ul>
+                <li><strong>Better research discovery</strong>: Funders and institutions can identify all outputs from their investments</li>
+                <li><strong>Accountability and impact assessment</strong>: Research organizations can demonstrate the outcomes of their funding</li>
+                <li><strong>Compliance monitoring</strong>: Ensure authors and publishers meet open science requirements</li>
+                <li><strong>Research analytics</strong>: Enable comprehensive analysis of funding patterns and research outputs</li>
+                <li><strong>Transparency</strong>: Make the connections between funding and research visible to the public</li>
+            </ul>
+            
+            <p>When funding metadata is incomplete or missing, these benefits are lost—making it harder to track research impact, justify investments, and ensure transparency in the research ecosystem.</p>
+
+            <h2 id="how">How it works</h2>
+            <p>The tool is straightforward:</p>
+            <ol>
+                <li>Enter a DOI</li>
+                <li>The tool attempts to retrieve the article's fulltext and extract the funding acknowledgement section</li>
+                <li>Simultaneously, it queries Crossref for funding metadata</li>
+                <li>Both are displayed side by side</li>
+            </ol>
+            
+            <p><strong>Crossref metadata shows:</strong></p>
+            <ul>
+                <li><strong>Funder name</strong> (as registered)</li>
+                <li><strong>Funder ID</strong> (persistent identifier for the funding organization)</li>
+                <li><strong>Award</strong> (grant number or grant ID)</li>
+            </ul>
+
+            <h2 id="understanding">Understanding the results</h2>
+            <p><strong>When results differ, several scenarios are possible:</strong></p>
+            
+            <p><strong>Acknowledgement shown, but no Crossref metadata:</strong> The article contains a funding section, but the publisher has not extracted this information (or did so incompletely) and has not passed it to Crossref. Many publishers use third-party providers for this extraction.</p>
+            
+            <p><strong>No acknowledgement shown, but Crossref metadata present:</strong> The tool likely couldn't locate the acknowledgement section. See Limitations below.</p>
+
+            <h2 id="action">What you can do</h2>
+            
+            <h3>If you're a researcher or author:</h3>
+            <ul>
+                <li>Check your own publications to see if funding metadata is complete</li>
+                <li>If metadata is missing, contact the publisher to request they deposit it with Crossref</li>
+                <li>Ensure your funding acknowledgements are clear and complete in future submissions</li>
+            </ul>
+
+            <h3>If you're a publisher:</h3>
+            <ul>
+                <li>Review your metadata workflows to ensure funding information is consistently extracted and deposited</li>
+                <li>Consider implementing automated extraction tools or improving existing processes</li>
+                <li>Prioritize complete metadata as part of your commitment to open science</li>
+            </ul>
+
+            <h3>If you're a research funder:</h3>
+            <ul>
+                <li>Monitor compliance with your metadata requirements across funded outputs</li>
+                <li>Use this tool to identify gaps in your funded research portfolio</li>
+                <li>Engage with publishers to improve metadata quality for your grants</li>
+            </ul>
+
+            <h3>If you're a librarian or research administrator:</h3>
+            <ul>
+                <li>Use this tool to audit institutional research outputs</li>
+                <li>Advocate for better metadata practices with publishers</li>
+                <li>Support researchers in ensuring their funding is properly acknowledged</li>
+            </ul>
+
+            <h2 id="limitations">Limitations</h2>
+            <p>The Funding Metadata Checker scrapes the <strong>HTML version</strong> of articles, not PDFs. It works best with <strong>open access articles</strong>, though sometimes funding acknowledgements on paywalled article landing pages are also accessible and will be displayed.</p>
+            
+            <p>Some publishers actively block scraping of their landing pages or encrypt article HTML, preventing extraction. For these articles, the tool will return an error message. This doesn't necessarily mean the article lacks funding metadata.</p>
+            
+            <p>The completeness and quality of Crossref metadata depends entirely on what publishers deposit.</p>
+
+            <h2 id="technical">Technical details</h2>
+            <p>The Funding Metadata Checker is powered by <a href="https://www.scrapingbee.com" target="_blank">ScrapingBee</a> (fulltext extraction) and the <a href="https://www.crossref.org/documentation/retrieve-metadata/" target="_blank">Crossref API</a> (metadata retrieval).</p>
+            
+            <p>The code is open source and available on <a href="https://github.com/hldejonge/fundingmetadatachecker" target="_blank">GitHub</a>.</p>
+            
+            <div class="highlight">
+                <p><strong>Feedback?</strong> Found a bug or have suggestions? Please submit an issue on <a href="https://github.com/hldejonge/fundingmetadatachecker/issues" target="_blank">GitHub</a>.</p>
+            </div>
+        </div>
+
+        <footer>
+            <a href="https://hldejonge.github.io/fundingmetadatachecker/">Back to Funding Metadata Checker</a> | 
+            <a href="https://github.com/hldejonge/fundingmetadatachecker" target="_blank">GitHub</a>
+        </footer>
+    </div>
+</body>
+</html>
