@@ -6,7 +6,7 @@
     <title>Funding Metadata Checker</title>
     <link rel="icon" type="image/png" href="logo.png">
     <style>
-        * {10.
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -480,7 +480,7 @@
         
         <div class="input-group">
             <div class="input-wrapper">
-                <input type="text" id="doi-input" placeholder="Enter DOI (e.g., 10.1007/s11192-016-1953-y)" onkeypress="if(event.key === 'Enter') checkFunding()">
+                <input type="text" id="doi-input" placeholder="Enter DOI (e.g., 10.1093/reseval/rvaa038)" onkeypress="if(event.key === 'Enter') checkFunding()">
                 <button id="check-btn" onclick="checkFunding()">
                     <span id="btn-icon">🔍</span>
                     <span id="btn-text">Check</span>
@@ -669,7 +669,31 @@
             const response = await fetch(scrapingBeeUrl);
             
             if (!response.ok) {
-                return `Error: ScrapingBee returned status ${response.status}`;
+                // Provide user-friendly error messages based on status code
+                const status = response.status;
+                let errorMsg = 'Error retrieving article content: ';
+                
+                switch(status) {
+                    case 403:
+                        errorMsg += 'The publisher blocks automated access to this article. Try accessing it directly through your institution.';
+                        break;
+                    case 404:
+                        errorMsg += 'Article not found. Please verify the DOI is correct.';
+                        break;
+                    case 429:
+                        errorMsg += 'Rate limit reached. Please try again in a few minutes.';
+                        break;
+                    case 500:
+                        errorMsg += 'Server error occurred while retrieving the article. This is usually temporary - please try again later.';
+                        break;
+                    case 503:
+                        errorMsg += 'Service temporarily unavailable. Please try again in a moment.';
+                        break;
+                    default:
+                        errorMsg += `HTTP ${status}. The article content could not be retrieved.`;
+                }
+                
+                return errorMsg;
             }
             
             let html = await response.text();
@@ -820,7 +844,7 @@
 
         // Use default DOI if none is entered
         if (!doi) {
-            doi = '10.1007/s11192-016-1953-y';
+            doi = '10.1093/reseval/rvaa038';
             doiInput.value = doi;
         }
 
@@ -849,7 +873,24 @@
 
         try {
             const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`);
-            if (!response.ok) throw new Error('Could not fetch DOI information from Crossref API (HTTP ' + response.status + ')');
+            
+            if (!response.ok) {
+                let errorMsg = 'Error retrieving DOI information: ';
+                
+                switch(response.status) {
+                    case 404:
+                        errorMsg += 'DOI not found in Crossref. Please verify the DOI is correct.';
+                        break;
+                    case 503:
+                        errorMsg += 'Crossref service temporarily unavailable. Please try again later.';
+                        break;
+                    default:
+                        errorMsg += `Crossref API returned HTTP ${response.status}.`;
+                }
+                
+                throw new Error(errorMsg);
+            }
+            
             const data = await response.json();
             const work = data.message || {};
             const acknowledgement = await GET_ACKNOWLEDGEMENT3(doi);
@@ -867,7 +908,13 @@
             displayResults(resultData);
 
         } catch (err) {
-            const errorText = 'An error occurred: ' + (err?.message || String(err));
+            let errorText = err?.message || String(err);
+            
+            // Add helpful context if it's a network error
+            if (errorText.includes('Failed to fetch') || errorText.includes('NetworkError')) {
+                errorText = 'Network error: Please check your internet connection and try again.';
+            }
+            
             errorMessage.textContent = errorText;
             errorAlert.classList.remove('hidden');
             
@@ -890,12 +937,14 @@
         document.getElementById('result-link-text').textContent = resultData.url;
 
         const ackText = document.getElementById('acknowledgement-text');
-        if (typeof resultData.acknowledgement === 'string' && resultData.acknowledgement.startsWith('Error:')) {
+        if (typeof resultData.acknowledgement === 'string' && resultData.acknowledgement.startsWith('Error')) {
             ackText.className = 'italic text-amber';
+            // Make error message more user-friendly
+            ackText.textContent = resultData.acknowledgement;
         } else {
             ackText.className = '';
+            ackText.textContent = resultData.acknowledgement;
         }
-        ackText.textContent = resultData.acknowledgement;
 
         // Render Funding
         const fundingContainer = document.getElementById('funding-container');
