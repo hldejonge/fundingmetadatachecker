@@ -480,7 +480,7 @@
         
         <div class="input-group">
             <div class="input-wrapper">
-                <input type="text" id="doi-input" placeholder="Enter DOI (e.g., 10.1093/reseval/rvaa038)" onkeypress="if(event.key === 'Enter') checkFunding()">
+                <input type="text" id="doi-input" placeholder="Enter DOI (e.g., 10.1007/s11192-016-1953-y)" onkeypress="if(event.key === 'Enter') checkFunding()">
                 <button id="check-btn" onclick="checkFunding()">
                     <span id="btn-icon">🔍</span>
                     <span id="btn-text">Check</span>
@@ -844,7 +844,7 @@
 
         // Use default DOI if none is entered
         if (!doi) {
-            doi = '10.1093/reseval/rvaa038';
+            doi = '10.1007/s11192-016-1953-y';
             doiInput.value = doi;
         }
 
