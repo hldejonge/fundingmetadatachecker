@@ -548,7 +548,61 @@
 <script src="patterns.js"></script>
 
 <script>
-    // ---------------- Persistent Cache with LocalStorage ----------------
+    // ============================================================================
+    // GOOGLE SHEETS LOGGING CONFIGURATION
+    // ============================================================================
+    // Replace this with your Google Apps Script Web App URL
+    const LOGGING_WEBHOOK = 'JOUW_WEB_APP_URL_HIER';
+    
+    // Set to false to disable logging (for testing)
+    const ENABLE_LOGGING = true;
+
+    // ============================================================================
+    // LOGGING FUNCTION
+    // ============================================================================
+    async function logUsage(doi, acknowledgementText) {
+        if (!ENABLE_LOGGING) {
+            console.log('Logging disabled');
+            return;
+        }
+        
+        if (!LOGGING_WEBHOOK || LOGGING_WEBHOOK === 'JOUW_WEB_APP_URL_HIER') {
+            console.log('Logging webhook not configured');
+            return;
+        }
+        
+        try {
+            // Bepaal of scraping succesvol was
+            const scrapingSuccess = acknowledgementText && 
+                                   !acknowledgementText.startsWith('Error') && 
+                                   acknowledgementText !== 'No acknowledgement section found';
+            
+            const logData = {
+                timestamp: new Date().toISOString(),
+                doi: doi,
+                scrapingSuccess: scrapingSuccess,
+                acknowledgementText: acknowledgementText || 'N/A'
+            };
+            
+            await fetch(LOGGING_WEBHOOK, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(logData)
+            });
+            
+            console.log('✓ Usage logged:', doi, scrapingSuccess ? '(success)' : '(failed)');
+        } catch (error) {
+            console.error('✗ Logging failed:', error);
+            // Falen van logging stopt de tool niet
+        }
+    }
+
+    // ============================================================================
+    // PERSISTENT CACHE WITH LOCALSTORAGE
+    // ============================================================================
     const CACHE_DURATION = 86400000; // 24 hours in milliseconds
     const ERROR_CACHE_DURATION = 1800000; // 30 minutes for errors
     const CACHE_PREFIX = 'fmc_';
@@ -629,10 +683,14 @@
         }
     }
 
-    // ---------------- ScrapingBee Configuration ----------------
+    // ============================================================================
+    // SCRAPINGBEE CONFIGURATION
+    // ============================================================================
     const SCRAPINGBEE_API_KEY = 'ZOLO8U5NQBWC692V7TP5DIZMLLZNEEWGXZPLKIQ0HSN1UE8TZGOK6J3ZQQ0EZUIDSV50GRPISA51FTP4';
 
-    // ---------------- Helper Functions ----------------
+    // ============================================================================
+    // HELPER FUNCTIONS
+    // ============================================================================
     function escapeHtml(str) {
         if (str === undefined || str === null) return '';
         return String(str)
@@ -648,7 +706,9 @@
         return val.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
     }
 
-    // ---------------- ScrapingBee Acknowledgement Extraction ----------------
+    // ============================================================================
+    // SCRAPINGBEE ACKNOWLEDGEMENT EXTRACTION
+    // ============================================================================
     async function GET_ACKNOWLEDGEMENT3(doi) {
         if (!doi) return 'Error: No DOI provided';
         
@@ -821,7 +881,9 @@
         }
     }
 
-    // ---------------- Helper to extract Funder ID ----------------
+    // ============================================================================
+    // HELPER TO EXTRACT FUNDER ID
+    // ============================================================================
     function getFunderId(f) {
         if (f.DOI) return f.DOI;
         if (typeof f.id === 'string') return f.id;
@@ -831,7 +893,9 @@
         return null;
     }
 
-    // ---------------- Main Function ----------------
+    // ============================================================================
+    // MAIN FUNCTION
+    // ============================================================================
     async function checkFunding() {
         const doiInput = document.getElementById('doi-input');
         let doi = doiInput.value.trim();
@@ -905,6 +969,9 @@
             // Cache the successful result
             setCachedResult(cleanDoi, resultData, false);
 
+            // LOG THE USAGE
+            await logUsage(cleanDoi, acknowledgement);
+
             displayResults(resultData);
 
         } catch (err) {
@@ -928,7 +995,9 @@
         }
     }
 
-    // ---------------- Display Results Function ----------------
+    // ============================================================================
+    // DISPLAY RESULTS FUNCTION
+    // ============================================================================
     function displayResults(resultData) {
         const results = document.getElementById('results');
         
