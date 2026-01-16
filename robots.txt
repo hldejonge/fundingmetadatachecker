@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hldejonge.github.io/fundingmetadatachecker/sitemap.xml
