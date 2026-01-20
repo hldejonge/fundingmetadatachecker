@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Batch processing tool for funding metadata. Extract acknowledgements from multiple scholarly articles at once.">
+    <meta name="keywords" content="funding metadata, research funding, acknowledgements, Crossref, DOI, scholarly publishing, batch processing">
+    <meta name="author" content="Hans de Jonge">
+    <title>Batch Processing - Funding Metadata Checker</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #4A6FA5;
+            --light-blue: #6B8EC4;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --error: #e74c3c;
+            --border: #e1e8ed;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #e8eef3 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        header {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--primary-blue);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .header-text h1 {
+            color: var(--primary-blue);
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header-text p {
+            color: var(--text-light);
+            font-size: 0.95em;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: rgba(74, 111, 165, 0.1);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            background: rgba(74, 111, 165, 0.2);
+            transform: translateX(-5px);
+        }
+
+        /* Input Section */
+        .input-section {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 20px;
+        }
+
+        .input-section h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-section h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: var(--primary-blue);
+            border-radius: 2px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 250px;
+            padding: 14px 20px;
+            font-size: 0.95em;
+            font-family: 'Courier New', monospace;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+        }
+
+        .batch-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 6px;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .batch-info .counter {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .batch-info .limit {
+            color: var(--text-light);
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 14px 32px;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--light-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(74, 111, 165, 0.3);
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Progress Section */
+        .progress-section {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-blue);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.9em;
+            color: var(--text-dark);
+            margin-top: 8px;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert.active {
+            display: flex;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border-left: 4px solid var(--error);
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .alert span:first-child {
+            font-size: 1.5em;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .footer a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header-text h1 {
+                font-size: 1.5em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .batch-info {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="back-link">
+            <span>←</span>
+            <span>Back to Single DOI Checker</span>
+        </a>
+        
+        <div class="header-content">
+            <div class="logo">
+                <img src="logo.png" alt="Funding Metadata Checker Logo">
+            </div>
+            <div class="header-text">
+                <h1>Batch Processing<sup style="font-size: 0.5em; font-weight: 600; margin-left: 8px;">BETA</sup></h1>
+                <p>Extract funding acknowledgements and Crossref metadata for multiple DOIs at once</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Alerts -->
+    <div id="alert-container"></div>
+
+    <!-- Input Section -->
+    <div class="input-section">
+        <h2>Enter DOIs</h2>
+        <textarea 
+            id="doi-input" 
+            placeholder="Enter DOIs (one per line, maximum 10)
+
+Example:
+10.1007/s11192-016-1953-y
+10.1038/nature12345
+10.1016/j.cell.2023.01.001"
+            oninput="updateCounter()"
+        ></textarea>
+        
+        <div class="batch-info">
+            <div class="counter">
+                <span id="doi-count">0</span> DOI(s) entered
+            </div>
+            <div class="limit">
+                Maximum: 10 DOIs
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="process-btn" onclick="processDOIs()">
+                <span id="btn-icon">▶️</span>
+                <span id="btn-text">Process Batch</span>
+            </button>
+            <button id="download-btn" onclick="downloadCSV()" style="display: none;">
+                <span>⬇️</span>
+                <span>Download CSV</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div id="progress-section" class="progress-section">
+        <div class="progress-header">Processing DOIs...</div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div style="margin-bottom: 10px;">
+            <a href="about.html">About</a> | 
+            <a href="https://github.com/hldejonge/fundingmetadatachecker" target="_blank">GitHub</a> | 
+            <a href="mailto:hdejonge@xs4all.nl?subject=Funding Metadata Checker">Contact</a>
+        </div>
+        <div style="margin-bottom: 10px;">
+            This work is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license">Creative Commons Attribution 4.0 International License</a>
+        </div>
+        <div>
+            Powered by <a href="https://www.firecrawl.dev" target="_blank">Firecrawl</a> and <a href="https://www.crossref.org" target="_blank">Crossref</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================================
+    // CONFIGURATION
+    // ============================================================================
+    const FIRECRAWL_API_KEY = 'fc-44469800c0b54f36ab956063ccbe100d';
+    const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v1/scrape';
+
+    let resultsData = [];
+
+    // ============================================================================
+    // UPDATE COUNTER
+    // ============================================================================
+    function updateCounter() {
+        const input = document.getElementById('doi-input').value;
+        const dois = input.split('\n')
+            .map(doi => doi.trim())
+            .filter(doi => doi.length > 0);
+        document.getElementById('doi-count').textContent = Math.min(dois.length, 10);
+    }
+
+    // ============================================================================
+    // SHOW ALERT
+    // ============================================================================
+    function showAlert(message, type) {
+        const container = document.getElementById('alert-container');
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} active`;
+        alert.innerHTML = `
+            <span>${type === 'error' ? '⚠️' : type === 'success' ? '✓' : 'ℹ️'}</span>
+            <p>${message}</p>
+        `;
+        container.innerHTML = '';
+        container.appendChild(alert);
+
+        // Auto-hide success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                alert.classList.remove('active');
+            }, 5000);
+        }
+    }
+
+    // ============================================================================
+    // GET ACKNOWLEDGEMENT (from your Google Apps Script)
+    // ============================================================================
+    async function getAcknowledgement(doi) {
+        if (!doi) return "Error: No DOI provided";
+
+        doi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+
+        try {
+            const targetUrl = "https://doi.org/" + doi;
+            
+            const payload = {
+                url: targetUrl,
+                formats: ['html'],
+                onlyMainContent: true,
+                excludeTags: ['nav', 'footer', 'script', 'style', 'iframe'],
+                waitFor: 3000,
+                timeout: 60000,
+                removeBase64Images: true
+            };
+
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + FIRECRAWL_API_KEY
+                },
+                body: JSON.stringify(payload)
+            };
+
+            const response = await fetch(FIRECRAWL_API_URL, options);
+
+            if (!response.ok) {
+                return "Error: Could not fetch article page (HTTP " + response.status + ")";
+            }
+
+            const responseData = await response.json();
+            
+            if (!responseData.success || !responseData.data || !responseData.data.html) {
+                return "Error: Invalid response from Firecrawl";
+            }
+            
+            let html = responseData.data.html;
+            html = html.replace(/[\r\n]+/g, ' ');
+
+            const sections = { acknowledgement: [], funding: [] };
+            const seenContentHashes = {};
+
+            // Heading-based extraction
+            const headingRegex = /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi;
+            const headings = [];
+            let match;
+            while ((match = headingRegex.exec(html)) !== null) {
+                headings.push({
+                    level: parseInt(match[1]),
+                    text: match[2],
+                    start: match.index,
+                    end: headingRegex.lastIndex
+                });
+            }
+            headings.push({ start: html.length, level: 0 });
+
+            for (let i = 0; i < headings.length - 1; i++) {
+                const current = headings[i];
+                const next = headings[i + 1];
+
+                const label = current.text.replace(/<[^>]+>/g, '').trim().toLowerCase();
+                const isAck = /acknowledgement?s?|acknowledgment?s?/.test(label);
+                const isFund = /funding/.test(label);
+                if (!isAck && !isFund) continue;
+
+                const contentHtml = html.substring(current.end, next.start).trim();
+                const cleaned = contentHtml.replace(/<[^>]+>/g, ' ')
+                                           .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+                                           .replace(/\s+/g, ' ')
+                                           .trim();
+                if (cleaned.length < 20) continue;
+
+                const hash = cleaned.substring(0, 300);
+                if (seenContentHashes[hash]) continue;
+                seenContentHashes[hash] = true;
+
+                if (isAck && isFund) {
+                    sections.acknowledgement.push(cleaned);
+                    sections.funding.push(cleaned);
+                } else if (isAck) {
+                    sections.acknowledgement.push(cleaned);
+                } else if (isFund) {
+                    sections.funding.push(cleaned);
+                }
+            }
+
+            // Container fallback
+            if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {
+                const containerPatterns = [
+                    /<section[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+                    /<div[^>]*(?:class|id)="[^"]*(?:acknowledgement?|acknowledgment|funding)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                    /<div[^>]*class="[^"]*funding-statement[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                    /<section[^>]*class="[^"]*(?:hlFld-Acknowledgements?|hlFld-Funding)[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+                    /<div[^>]*class="[^"]*article-header__references-container[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+                    /<div[^>]*class="[^"]*header-note-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
+                ];
+
+                for (let p = 0; p < containerPatterns.length; p++) {
+                    const matches = html.match(containerPatterns[p]);
+                    if (!matches) continue;
+
+                    for (let j = 0; j < matches.length; j++) {
+                        const content = matches[j].replace(containerPatterns[p], '$1') || matches[j];
+                        const cleaned = content.replace(/<[^>]+>/g, ' ')
+                                               .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+                                               .replace(/\s+/g, ' ')
+                                               .trim();
+                        if (cleaned.length < 20) continue;
+                        const hash = cleaned.substring(0, 300);
+                        if (seenContentHashes[hash]) continue;
+                        seenContentHashes[hash] = true;
+
+                        const isAck = /acknowledgement?s?|acknowledgment?s?/.test(matches[j]);
+                        const isFund = /funding/.test(matches[j]);
+
+                        if (isAck && isFund) {
+                            sections.acknowledgement.push(cleaned);
+                            sections.funding.push(cleaned);
+                        } else if (isAck) {
+                            sections.acknowledgement.push(cleaned);
+                        } else if (isFund) {
+                            sections.funding.push(cleaned);
+                        }
+                    }
+                }
+            }
+
+            function selectLongest(arr) {
+                if (!arr || arr.length === 0) return null;
+                let max = '';
+                for (let k = 0; k < arr.length; k++) if (arr[k].length > max.length) max = arr[k];
+                return max;
+            }
+
+            const ackText = selectLongest(sections.acknowledgement);
+            const fundText = selectLongest(sections.funding);
+            let result = '';
+            if (ackText && fundText) result = ackText + "\n\nFunding:\n" + fundText;
+            else if (ackText) result = ackText;
+            else if (fundText) result = fundText;
+            else result = "No acknowledgement section found";
+
+            if (result.length > 5000) result = result.substring(0, 5000) + "...";
+
+            return result;
+
+        } catch (e) {
+            return "Error: " + e.toString();
+        }
+    }
+
+    // ============================================================================
+    // GET CROSSREF FUNDING
+    // ============================================================================
+    async function getCrossrefFunding(doi) {
+        try {
+            const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+            if (!response.ok) return 'N/A';
+            
+            const data = await response.json();
+            const funders = data.message.funder || [];
+            
+            if (funders.length === 0) return 'No funding information';
+            
+            return funders.map(f => {
+                let info = f.name || 'Unknown funder';
+                if (f.award && f.award.length > 0) {
+                    info += ' (Award: ' + f.award.join(', ') + ')';
+                }
+                return info;
+            }).join('; ');
+        } catch (error) {
+            return 'Error fetching Crossref data';
+        }
+    }
+
+    // ============================================================================
+    // PROCESS DOIs
+    // ============================================================================
+    async function processDOIs() {
+        const input = document.getElementById('doi-input').value.trim();
+        if (!input) {
+            showAlert('Please enter at least one DOI', 'error');
+            return;
+        }
+
+        const dois = input.split('\n')
+            .map(doi => doi.trim())
+            .filter(doi => doi.length > 0)
+            .slice(0, 10);
+
+        if (dois.length === 0) {
+            showAlert('No valid DOIs found', 'error');
+            return;
+        }
+
+        const processBtn = document.getElementById('process-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const progressSection = document.getElementById('progress-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        processBtn.disabled = true;
+        document.getElementById('btn-icon').innerHTML = '<div class="spinner"></div>';
+        document.getElementById('btn-text').textContent = 'Processing...';
+        downloadBtn.style.display = 'none';
+        progressSection.classList.add('active');
+        resultsData = [];
+
+        showAlert(`Processing ${dois.length} DOI(s)...`, 'info');
+
+        for (let i = 0; i < dois.length; i++) {
+            const doi = dois[i].replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+            
+            const percentage = ((i + 1) / dois.length) * 100;
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = `Processing ${i + 1}/${dois.length}: ${doi}`;
+
+            const acknowledgement = await getAcknowledgement(doi);
+            const crossrefFunding = await getCrossrefFunding(doi);
+
+            resultsData.push({
+                doi: doi,
+                acknowledgement: acknowledgement,
+                crossrefFunding: crossrefFunding
+            });
+
+            // Small delay to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        progressText.textContent = `✓ Successfully processed ${dois.length} DOI(s)`;
+        showAlert(`Successfully processed ${dois.length} DOI(s). Click "Download CSV" to save results.`, 'success');
+        
+        processBtn.disabled = false;
+        document.getElementById('btn-icon').textContent = '▶️';
+        document.getElementById('btn-text').textContent = 'Process Batch';
+        downloadBtn.style.display = 'flex';
+    }
+
+    // ============================================================================
+    // DOWNLOAD CSV
+    // ============================================================================
+    function downloadCSV() {
+        if (resultsData.length === 0) {
+            showAlert('No data to download', 'error');
+            return;
+        }
+
+        // Create CSV content
+        let csv = 'DOI,Acknowledgement,Crossref Funding\n';
+        
+        resultsData.forEach(row => {
+            const escapedAck = '"' + (row.acknowledgement || '').replace(/"/g, '""') + '"';
+            const escapedFunding = '"' + (row.crossrefFunding || '').replace(/"/g, '""') + '"';
+            csv += `"${row.doi}",${escapedAck},${escapedFunding}\n`;
+        });
+
+        // Create download
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'doi_funding_data.csv');
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert('CSV file downloaded successfully!', 'success');
+    }
+</script>
+</body>
+</html>
