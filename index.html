@@ -557,18 +557,23 @@
     </div>
 </div>
 
+<!-- Load configuration file (contains API keys) -->
+<script src="config.js"></script>
+
 <!-- Load patterns from external file -->
 <script src="patterns.js"></script>
 
 <script>
     // ============================================================================
-    // GOOGLE SHEETS LOGGING CONFIGURATION
+    // CONFIGURATION LOADED FROM config.js
     // ============================================================================
-    // Replace this with your Google Apps Script Web App URL
-    const LOGGING_WEBHOOK = 'https://script.google.com/macros/s/AKfycbwGnmFu7J3c58_2CHso9_EDvDiqDjzzhDUHOZSJubrJSvNFDrvvCw-9gWJ32lyg1P8s/exec';
-    
-    // Set to false to disable logging (for testing)
-    const ENABLE_LOGGING = true;
+    const LOGGING_WEBHOOK = CONFIG.LOGGING_WEBHOOK;
+    const ENABLE_LOGGING = CONFIG.ENABLE_LOGGING;
+    const FIRECRAWL_API_KEY = CONFIG.FIRECRAWL_API_KEY;
+    const FIRECRAWL_API_URL = CONFIG.FIRECRAWL_API_URL;
+    const CACHE_DURATION = CONFIG.CACHE_DURATION;
+    const ERROR_CACHE_DURATION = CONFIG.ERROR_CACHE_DURATION;
+    const CACHE_PREFIX = CONFIG.CACHE_PREFIX;
 
     // ============================================================================
     // LOGGING FUNCTION
@@ -616,10 +621,6 @@
     // ============================================================================
     // PERSISTENT CACHE WITH LOCALSTORAGE
     // ============================================================================
-    const CACHE_DURATION = 86400000; // 24 hours in milliseconds
-    const ERROR_CACHE_DURATION = 1800000; // 30 minutes for errors
-    const CACHE_PREFIX = 'fmc_';
-
     function getCachedResult(doi) {
         try {
             const cacheKey = CACHE_PREFIX + doi;
@@ -695,12 +696,6 @@
             console.error('Error clearing cache:', error);
         }
     }
-
-    // ============================================================================
-    // FIRECRAWL CONFIGURATION
-    // ============================================================================
-    const FIRECRAWL_API_KEY = 'fc-44469800c0b54f36ab956063ccbe100d';
-    const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v1/scrape';
 
     // ============================================================================
     // HELPER FUNCTIONS
