@@ -102,32 +102,9 @@
             transform: translateX(-5px);
         }
 
-        /* Input Section */
-        .input-section {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            margin-bottom: 20px;
-        }
-
-        .input-section h2 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--primary-blue);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .input-section h2::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 20px;
-            background: var(--primary-blue);
-            border-radius: 2px;
+        /* Input Group (inside header) */
+        .input-group {
+            margin-top: 25px;
         }
 
         textarea {
@@ -366,7 +343,7 @@
 </head>
 <body>
 <div class="container">
-    <!-- Header -->
+    <!-- Header with Input -->
     <header>
         <a href="index.html" class="back-link">
             <span>←</span>
@@ -382,45 +359,43 @@
                 <p>Extract funding acknowledgements and Crossref metadata for multiple DOIs at once</p>
             </div>
         </div>
-    </header>
 
-    <!-- Alerts -->
-    <div id="alert-container"></div>
-
-    <!-- Input Section -->
-    <div class="input-section">
-        <h2>Enter DOIs</h2>
-        <textarea 
-            id="doi-input" 
-            placeholder="Enter DOIs (one per line, maximum 10)
+        <div class="input-group">
+            <textarea 
+                id="doi-input" 
+                placeholder="Enter DOIs (one per line, maximum 10)
 
 Example:
 10.1007/s11192-016-1953-y
 10.1038/nature12345
 10.1016/j.cell.2023.01.001"
-            oninput="updateCounter()"
-        ></textarea>
-        
-        <div id="batch-info" class="batch-info">
-            <div class="counter">
-                <span id="doi-count">0</span> DOI(s) entered
+                oninput="updateCounter()"
+            ></textarea>
+            
+            <div id="batch-info" class="batch-info">
+                <div class="counter">
+                    <span id="doi-count">0</span> DOI(s) entered
+                </div>
+                <div class="limit">
+                    Maximum: 10 DOIs
+                </div>
             </div>
-            <div class="limit">
-                Maximum: 10 DOIs
-            </div>
-        </div>
 
-        <div class="button-group">
-            <button id="process-btn" onclick="processDOIs()">
-                <span id="btn-icon">▶️</span>
-                <span id="btn-text">Process Batch</span>
-            </button>
-            <button id="download-btn" onclick="downloadCSV()" style="display: none;">
-                <span>⬇️</span>
-                <span>Download CSV</span>
-            </button>
+            <div class="button-group">
+                <button id="process-btn" onclick="processDOIs()">
+                    <span id="btn-icon">▶️</span>
+                    <span id="btn-text">Process Batch</span>
+                </button>
+                <button id="download-btn" onclick="downloadCSV()" style="display: none;">
+                    <span>⬇️</span>
+                    <span>Download CSV</span>
+                </button>
+            </div>
         </div>
-    </div>
+    </header>
+
+    <!-- Alerts -->
+    <div id="alert-container"></div>
 
     <!-- Progress Section -->
     <div id="progress-section" class="progress-section">
