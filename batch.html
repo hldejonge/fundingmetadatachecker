@@ -169,6 +169,15 @@
             color: var(--text-light);
         }
 
+        .batch-info.warning {
+            background: rgba(243, 156, 18, 0.1);
+            border-left: 4px solid var(--warning);
+        }
+
+        .batch-info.warning .counter {
+            color: var(--warning);
+        }
+
         /* Buttons */
         .button-group {
             display: flex;
@@ -295,6 +304,12 @@
             border-left: 4px solid var(--primary-blue);
         }
 
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid var(--warning);
+        }
+
         .alert span:first-child {
             font-size: 1.5em;
         }
@@ -386,7 +401,7 @@ Example:
             oninput="updateCounter()"
         ></textarea>
         
-        <div class="batch-info">
+        <div id="batch-info" class="batch-info">
             <div class="counter">
                 <span id="doi-count">0</span> DOI(s) entered
             </div>
@@ -432,14 +447,65 @@ Example:
     </div>
 </div>
 
+<!-- Load configuration file (contains API keys) -->
+<script src="config.js"></script>
+
+<!-- Load patterns from external file -->
+<script src="patterns.js"></script>
+
 <script>
     // ============================================================================
-    // CONFIGURATION
+    // CONFIGURATION LOADED FROM config.js
     // ============================================================================
-    const FIRECRAWL_API_KEY = 'fc-44469800c0b54f36ab956063ccbe100d';
-    const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v1/scrape';
+    const LOGGING_WEBHOOK = CONFIG.LOGGING_WEBHOOK;
+    const ENABLE_LOGGING = CONFIG.ENABLE_LOGGING;
+    const FIRECRAWL_API_KEY = CONFIG.FIRECRAWL_API_KEY;
+    const FIRECRAWL_API_URL = CONFIG.FIRECRAWL_API_URL;
 
     let resultsData = [];
+
+    // ============================================================================
+    // LOGGING FUNCTION
+    // ============================================================================
+    async function logUsage(doi, acknowledgementText) {
+        if (!ENABLE_LOGGING) {
+            console.log('Logging disabled');
+            return;
+        }
+        
+        if (!LOGGING_WEBHOOK || LOGGING_WEBHOOK === 'JOUW_WEB_APP_URL_HIER') {
+            console.log('Logging webhook not configured');
+            return;
+        }
+        
+        try {
+            // Bepaal of scraping succesvol was
+            const scrapingSuccess = acknowledgementText && 
+                                   !acknowledgementText.startsWith('Error') && 
+                                   acknowledgementText !== 'No acknowledgement section found';
+            
+            const logData = {
+                timestamp: new Date().toISOString(),
+                doi: doi,
+                scrapingSuccess: scrapingSuccess,
+                acknowledgementText: acknowledgementText || 'N/A'
+            };
+            
+            await fetch(LOGGING_WEBHOOK, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(logData)
+            });
+            
+            console.log('✓ Usage logged:', doi, scrapingSuccess ? '(success)' : '(failed)');
+        } catch (error) {
+            console.error('✗ Logging failed:', error);
+            // Falen van logging stopt de tool niet
+        }
+    }
 
     // ============================================================================
     // UPDATE COUNTER
@@ -449,7 +515,30 @@ Example:
         const dois = input.split('\n')
             .map(doi => doi.trim())
             .filter(doi => doi.length > 0);
-        document.getElementById('doi-count').textContent = Math.min(dois.length, 10);
+        
+        const count = dois.length;
+        const processBtn = document.getElementById('process-btn');
+        const batchInfo = document.getElementById('batch-info');
+        
+        document.getElementById('doi-count').textContent = count;
+        
+        // Check if more than 10 DOIs
+        if (count > 10) {
+            processBtn.disabled = true;
+            batchInfo.classList.add('warning');
+            showAlert('Please limit your batch to 10 DOIs', 'warning');
+        } else {
+            processBtn.disabled = false;
+            batchInfo.classList.remove('warning');
+            // Remove warning alert if count is now valid
+            const alertContainer = document.getElementById('alert-container');
+            const warningAlerts = alertContainer.querySelectorAll('.alert-warning');
+            warningAlerts.forEach(alert => {
+                if (alert.textContent.includes('Please limit your batch to 10 DOIs')) {
+                    alert.remove();
+                }
+            });
+        }
     }
 
     // ============================================================================
@@ -459,8 +548,14 @@ Example:
         const container = document.getElementById('alert-container');
         const alert = document.createElement('div');
         alert.className = `alert alert-${type} active`;
+        
+        let icon = 'ℹ️';
+        if (type === 'error') icon = '⚠️';
+        else if (type === 'success') icon = '✓';
+        else if (type === 'warning') icon = '⚠️';
+        
         alert.innerHTML = `
-            <span>${type === 'error' ? '⚠️' : type === 'success' ? '✓' : 'ℹ️'}</span>
+            <span>${icon}</span>
             <p>${message}</p>
         `;
         container.innerHTML = '';
@@ -668,8 +763,13 @@ Example:
 
         const dois = input.split('\n')
             .map(doi => doi.trim())
-            .filter(doi => doi.length > 0)
-            .slice(0, 10);
+            .filter(doi => doi.length > 0);
+
+        // Extra check for 10 DOI limit
+        if (dois.length > 10) {
+            showAlert('Please limit your batch to 10 DOIs', 'warning');
+            return;
+        }
 
         if (dois.length === 0) {
             showAlert('No valid DOIs found', 'error');
@@ -700,6 +800,9 @@ Example:
 
             const acknowledgement = await getAcknowledgement(doi);
             const crossrefFunding = await getCrossrefFunding(doi);
+
+            // LOG EACH DOI
+            await logUsage(doi, acknowledgement);
 
             resultsData.push({
                 doi: doi,
