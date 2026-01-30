@@ -736,158 +736,191 @@
           return val.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();                                                                                                                                      
       }                                                                                                                                                                                                         
                                                                                                                                                                                                                 
-      // ============================================================================                                                                                                                           
-      // FIRECRAWL ACKNOWLEDGEMENT EXTRACTION (DOMParser-based)                                                                                                                                                 
-      // ============================================================================                                                                                                                           
-      async function GET_ACKNOWLEDGEMENT3(doi) {                                                                                                                                                                
-          if (!doi) return 'Error: No DOI provided';                                                                                                                                                            
-                                                                                                                                                                                                                
-          const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();                                                                                                                            
-                                                                                                                                                                                                                
-          try {                                                                                                                                                                                                 
-              const targetUrl = `https://doi.org/${cleanDoi}`;                                                                                                                                                  
-              console.log('Fetching acknowledgement for:', cleanDoi);                                                                                                                                           
-                                                                                                                                                                                                                
-              const payload = {                                                                                                                                                                                 
-                  url: targetUrl,                                                                                                                                                                               
-                  formats: ['html'],                                                                                                                                                                            
-                  onlyMainContent: true,                                                                                                                                                                        
-                  excludeTags: ['nav', 'footer', 'script', 'style', 'iframe'],                                                                                                                                  
-                  waitFor: 3000,                                                                                                                                                                                
-                  timeout: 60000,                                                                                                                                                                               
-                  removeBase64Images: true                                                                                                                                                                      
-              };                                                                                                                                                                                                
-                                                                                                                                                                                                                
-              const response = await fetch(FIRECRAWL_API_URL, {                                                                                                                                                 
-                  method: 'POST',                                                                                                                                                                               
-                  headers: {                                                                                                                                                                                    
-                      'Content-Type': 'application/json',                                                                                                                                                       
-                      'Authorization': 'Bearer ' + FIRECRAWL_API_KEY                                                                                                                                            
-                  },                                                                                                                                                                                            
-                  body: JSON.stringify(payload)                                                                                                                                                                 
-              });                                                                                                                                                                                               
-                                                                                                                                                                                                                
-              if (!response.ok) {                                                                                                                                                                               
-                  const status = response.status;                                                                                                                                                               
-                  let errorMsg = 'Error retrieving article content: ';                                                                                                                                          
-                  switch (status) {                                                                                                                                                                             
-                      case 403: errorMsg += 'The publisher blocks automated access to this article. Try accessing it directly through your institution.'; break;                                                
-                      case 404: errorMsg += 'Article not found. Please verify the DOI is correct.'; break;                                                                                                      
-                      case 429: errorMsg += 'Rate limit reached. Please try again in a few minutes.'; break;                                                                                                    
-                      case 500: errorMsg += 'Server error occurred while retrieving the article. This is usually temporary - please try again later.'; break;                                                   
-                      case 503: errorMsg += 'Service temporarily unavailable. Please try again in a moment.'; break;                                                                                            
-                      default: errorMsg += `HTTP ${status}. The article content could not be retrieved.`;                                                                                                       
-                  }                                                                                                                                                                                             
-                  return errorMsg;                                                                                                                                                                              
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              const responseData = await response.json();                                                                                                                                                       
-                                                                                                                                                                                                                
-              if (!responseData.success || !responseData.data || !responseData.data.html) {                                                                                                                     
-                  return 'Error: Invalid response from Firecrawl - could not extract HTML content';                                                                                                             
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              const html = responseData.data.html;                                                                                                                                                              
-              console.log('HTML received, length:', html.length);                                                                                                                                               
-                                                                                                                                                                                                                
-              // Parse with DOMParser instead of regex                                                                                                                                                          
-              const parser = new DOMParser();                                                                                                                                                                   
-              const doc = parser.parseFromString(html, 'text/html');                                                                                                                                            
-                                                                                                                                                                                                                
-              const sections = { acknowledgement: [], funding: [] };                                                                                                                                            
-              const seenContentHashes = new Set();                                                                                                                                                              
-                                                                                                                                                                                                                
-              // --- 1. Heading-based extraction ---                                                                                                                                                            
-              const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');                                                                                                                                  
-                                                                                                                                                                                                                
-              for (const heading of headings) {                                                                                                                                                                 
-                  const label = heading.textContent.trim().toLowerCase();                                                                                                                                       
-                  const isAck = /acknowledgeme?nts?/.test(label);                                                                                                                                               
-                  const isFund = /funding/.test(label);                                                                                                                                                         
-                                                                                                                                                                                                                
-                  if (!isAck && !isFund) continue;                                                                                                                                                              
-                                                                                                                                                                                                                
-                  // Collect text from all sibling elements until the next heading                                                                                                                              
-                  let content = '';                                                                                                                                                                             
-                  let sibling = heading.nextElementSibling;                                                                                                                                                     
-                  while (sibling && !/^H[1-6]$/i.test(sibling.tagName)) {                                                                                                                                       
-                      content += sibling.textContent + ' ';                                                                                                                                                     
-                      sibling = sibling.nextElementSibling;                                                                                                                                                     
-                  }                                                                                                                                                                                             
-                                                                                                                                                                                                                
-                  content = content.replace(/\s+/g, ' ').trim();                                                                                                                                                
-                  if (content.length < 20) continue;                                                                                                                                                            
-                                                                                                                                                                                                                
-                  const hash = content.substring(0, 300);                                                                                                                                                       
-                  if (seenContentHashes.has(hash)) continue;                                                                                                                                                    
-                  seenContentHashes.add(hash);                                                                                                                                                                  
-                                                                                                                                                                                                                
-                  if (isAck) sections.acknowledgement.push(content);                                                                                                                                            
-                  if (isFund) sections.funding.push(content);                                                                                                                                                   
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              // --- 2. Container fallback (CSS selector-based) ---                                                                                                                                             
-              if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {                                                                                                                     
-                  const containerSelector = [                                                                                                                                                                   
-                      '[class*="acknowledgement"]', '[class*="acknowledgment"]',                                                                                                                                
-                      '[id*="acknowledgement"]', '[id*="acknowledgment"]',                                                                                                                                      
-                      '[class*="funding"]', '[id*="funding"]',                                                                                                                                                  
-                      '[class*="funding-statement"]',                                                                                                                                                           
-                      '[class*="hlFld-Acknowledgement"]', '[class*="hlFld-Funding"]',                                                                                                                           
-                      '[class*="article-header__references-container"]',                                                                                                                                        
-                      '[class*="header-note-content"]'                                                                                                                                                          
-                  ].join(', ');                                                                                                                                                                                 
-                                                                                                                                                                                                                
-                  const containers = doc.querySelectorAll(containerSelector);                                                                                                                                   
-                                                                                                                                                                                                                
-                  for (const container of containers) {                                                                                                                                                         
-                      let cleaned = container.textContent.replace(/\s+/g, ' ').trim();                                                                                                                          
-                      if (cleaned.length < 20) continue;                                                                                                                                                        
-                                                                                                                                                                                                                
-                      const hash = cleaned.substring(0, 300);                                                                                                                                                   
-                      if (seenContentHashes.has(hash)) continue;                                                                                                                                                
-                      seenContentHashes.add(hash);                                                                                                                                                              
-                                                                                                                                                                                                                
-                      const tag = (container.className || '') + ' ' + (container.id || '');                                                                                                                     
-                      const isAck = /acknowledgeme?nts?/i.test(tag);                                                                                                                                            
-                      const isFund = /funding/i.test(tag);                                                                                                                                                      
-                                                                                                                                                                                                                
-                      if (isAck) sections.acknowledgement.push(cleaned);                                                                                                                                        
-                      if (isFund) sections.funding.push(cleaned);                                                                                                                                               
-                  }                                                                                                                                                                                             
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              // --- 3. Select longest result ---                                                                                                                                                               
-              function selectLongest(arr) {                                                                                                                                                                     
-                  if (!arr || arr.length === 0) return null;                                                                                                                                                    
-                  return arr.reduce((max, cur) => cur.length > max.length ? cur : max, '');                                                                                                                     
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              const ackText = selectLongest(sections.acknowledgement);                                                                                                                                          
-              const fundText = selectLongest(sections.funding);                                                                                                                                                 
-                                                                                                                                                                                                                
-              let result = '';                                                                                                                                                                                  
-              if (ackText && fundText) {                                                                                                                                                                        
-                  result = ackText + '\n\nFunding:\n' + fundText;                                                                                                                                               
-              } else if (ackText) {                                                                                                                                                                             
-                  result = ackText;                                                                                                                                                                             
-              } else if (fundText) {                                                                                                                                                                            
-                  result = fundText;                                                                                                                                                                            
-              } else {                                                                                                                                                                                          
-                  result = 'No acknowledgement section found';                                                                                                                                                  
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              if (result.length > 5000) {                                                                                                                                                                       
-                  result = result.substring(0, 5000) + '...';                                                                                                                                                   
-              }                                                                                                                                                                                                 
-                                                                                                                                                                                                                
-              console.log('Acknowledgement extracted:', result.substring(0, 100) + '...');                                                                                                                      
-              return result;                                                                                                                                                                                    
-                                                                                                                                                                                                                
-          } catch (error) {                                                                                                                                                                                     
-              console.error('Error in GET_ACKNOWLEDGEMENT3:', error);                                                                                                                                           
-              return `Error: ${error.message}`;                                                                                                                                                                 
-          }                                                                                                                                                                                                     
+      // FIRECRAWL ACKNOWLEDGEMENT EXTRACTION (DOMParser-based)                                                           
+      // ============================================================================                                     
+      async function GET_ACKNOWLEDGEMENT3(doi) {                                                                          
+          if (!doi) return 'Error: No DOI provided';                                                                      
+                                                                                                                          
+          const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();                                      
+                                                                                                                          
+          try {                                                                                                           
+              const targetUrl = `https://doi.org/${cleanDoi}`;                                                            
+              console.log('Fetching acknowledgement for:', cleanDoi);                                                     
+                                                                                                                          
+              const payload = {                                                                                           
+                  url: targetUrl,                                                                                         
+                  formats: ['html'],                                                                                      
+                  onlyMainContent: false,                                                                                 
+                  excludeTags: ['nav', 'footer', 'header', 'script',                                                      
+                                'style', 'iframe', 'aside', 'menu', 'form'],                                              
+                  waitFor: 3000,                                                                                          
+                  timeout: 60000,                                                                                         
+                  removeBase64Images: true                                                                                
+              };                                                                                                          
+                                                                                                                          
+              const response = await fetch(FIRECRAWL_API_URL, {                                                           
+                  method: 'POST',                                                                                         
+                  headers: {                                                                                              
+                      'Content-Type': 'application/json',                                                                 
+                      'Authorization': 'Bearer ' + FIRECRAWL_API_KEY                                                      
+                  },                                                                                                      
+                  body: JSON.stringify(payload)                                                                           
+              });                                                                                                         
+                                                                                                                          
+              if (!response.ok) {                                                                                         
+                  const status = response.status;                                                                         
+                  let errorMsg = 'Error retrieving article content: ';                                                    
+                  switch (status) {                                                                                       
+                      case 403: errorMsg += 'The publisher blocks automated access to this article. Try accessing it      
+  directly through your institution.'; break;                                                                             
+                      case 404: errorMsg += 'Article not found. Please verify the DOI is correct.'; break;                
+                      case 429: errorMsg += 'Rate limit reached. Please try again in a few minutes.'; break;              
+                      case 500: errorMsg += 'Server error occurred while retrieving the article. This is usually temporary
+   - please try again later.'; break;                                                                                     
+                      case 503: errorMsg += 'Service temporarily unavailable. Please try again in a moment.'; break;      
+                      default: errorMsg += `HTTP ${status}. The article content could not be retrieved.`;                 
+                  }                                                                                                       
+                  return errorMsg;                                                                                        
+              }                                                                                                           
+                                                                                                                          
+              const responseData = await response.json();                                                                 
+                                                                                                                          
+              if (!responseData.success || !responseData.data || !responseData.data.html) {                               
+                  return 'Error: Invalid response from Firecrawl - could not extract HTML content';                       
+              }                                                                                                           
+                                                                                                                          
+              const html = responseData.data.html;                                                                        
+              console.log('HTML received, length:', html.length);                                                         
+                                                                                                                          
+              // Parse with DOMParser instead of regex                                                                    
+              const parser = new DOMParser();                                                                             
+              const doc = parser.parseFromString(html, 'text/html');                                                      
+                                                                                                                          
+              const sections = { acknowledgement: [], funding: [] };                                                      
+              const seenContentHashes = new Set();                                                                        
+                                                                                                                          
+              // --- 1. Heading-based extraction ---                                                                      
+              const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');                                            
+                                                                                                                          
+              for (const heading of headings) {                                                                           
+                  const label = heading.textContent.trim().toLowerCase();                                                 
+                  const isAck = /acknowledgeme?nts?/.test(label);                                                         
+                  const isFund = /funding/.test(label);                                                                   
+                                                                                                                          
+                  if (!isAck && !isFund) continue;                                                                        
+                                                                                                                          
+                  // Collect text from all sibling elements until the next heading                                        
+                  let content = '';                                                                                       
+                  let sibling = heading.nextElementSibling;                                                               
+                  while (sibling && !/^H[1-6]$/i.test(sibling.tagName)) {                                                 
+                      content += sibling.textContent + ' ';                                                               
+                      sibling = sibling.nextElementSibling;                                                               
+                  }                                                                                                       
+                                                                                                                          
+                  // Parent-container fallback when heading is inside a wrapper (OUP)                                     
+                  if (content.replace(/\s+/g, ' ').trim().length < 20) {                                                  
+                      const parent = heading.parentElement;                                                               
+                      if (parent && parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {                             
+                          content = parent.textContent.replace(heading.textContent, '').trim();                           
+                      }                                                                                                   
+                  }                                                                                                       
+                                                                                                                          
+                  content = content.replace(/\s+/g, ' ').trim();                                                          
+                  if (content.length < 20) continue;                                                                      
+                                                                                                                          
+                  const hash = content.substring(0, 300);                                                                 
+                  if (seenContentHashes.has(hash)) continue;                                                              
+                  seenContentHashes.add(hash);                                                                            
+                                                                                                                          
+                  if (isAck) sections.acknowledgement.push(content);                                                      
+                  if (isFund) sections.funding.push(content);                                                             
+              }                                                                                                           
+                                                                                                                          
+              // --- 2. Container fallback (CSS selector-based) ---                                                       
+              if (sections.acknowledgement.length === 0 && sections.funding.length === 0) {                               
+                  const containerSelector = [                                                                             
+                      '[class*="acknowledgement"]', '[class*="acknowledgment"]',                                          
+                      '[id*="acknowledgement"]', '[id*="acknowledgment"]',                                                
+                      '[class*="funding"]', '[id*="funding"]',                                                            
+                      '[class*="funding-statement"]',                                                                     
+                      '[class*="hlFld-Acknowledgement"]', '[class*="hlFld-Funding"]',                                     
+                      '[class*="article-header__references-container"]',                                                  
+                      '[class*="header-note-content"]',                                                                   
+                      '[id^="ack"]'                                                                                       
+                  ].join(', ');                                                                                           
+                                                                                                                          
+                  const containers = doc.querySelectorAll(containerSelector);                                             
+                                                                                                                          
+                  for (const container of containers) {                                                                   
+                      let cleaned = container.textContent.replace(/\s+/g, ' ').trim();                                    
+                      if (cleaned.length < 20) continue;                                                                  
+                                                                                                                          
+                      const hash = cleaned.substring(0, 300);                                                             
+                      if (seenContentHashes.has(hash)) continue;                                                          
+                      seenContentHashes.add(hash);                                                                        
+                                                                                                                          
+                      const cId = (container.id || '').toLowerCase();                                                     
+                      const cClass = (container.className || '').toLowerCase();                                           
+                      const tag = cClass + ' ' + cId;                                                                     
+                      var isAck = /acknowledgeme?nts?/i.test(tag) || cId.indexOf('ack') === 0;                            
+                      var isFund = /funding/i.test(tag);                                                                  
+                                                                                                                          
+                      if (isAck) sections.acknowledgement.push(cleaned);                                                  
+                      if (isFund) sections.funding.push(cleaned);                                                         
+                  }                                                                                                       
+              }                                                                                                           
+                                                                                                                          
+              // --- 3. PLOS: extract funding from <strong>Funding:</strong> labels ---                                   
+              if (sections.funding.length === 0) {                                                                        
+                  var fundingLabels = doc.querySelectorAll('.articleinfo strong, .articleMeta strong');                   
+                  for (var i = 0; i < fundingLabels.length; i++) {                                                        
+                      var strong = fundingLabels[i];                                                                      
+                      var labelText = strong.textContent.trim().toLowerCase();                                            
+                      if (labelText.indexOf('funding') !== 0) continue;                                                   
+                      var parentP = strong.parentElement;                                                                 
+                      if (!parentP) continue;                                                                             
+                      var fullText = parentP.textContent.replace(/\s+/g, ' ').trim();                                     
+                      // Remove the label itself from the text                                                            
+                      var fundContent = fullText.replace(/^funding[:\s]*/i, '').trim();                                   
+                      if (fundContent.length < 20) continue;                                                              
+                      var hash = fundContent.substring(0, 300);                                                           
+                      if (seenContentHashes.has(hash)) continue;                                                          
+                      seenContentHashes.add(hash);                                                                        
+                      sections.funding.push(fundContent);                                                                 
+                  }                                                                                                       
+              }                                                                                                           
+                                                                                                                          
+              // --- 4. Select longest result ---                                                                         
+              function selectLongest(arr) {                                                                               
+                  if (!arr || arr.length === 0) return null;                                                              
+                  return arr.reduce((max, cur) => cur.length > max.length ? cur : max, '');                               
+              }                                                                                                           
+                                                                                                                          
+              const ackText = selectLongest(sections.acknowledgement);                                                    
+              const fundText = selectLongest(sections.funding);                                                           
+                                                                                                                          
+              let result = '';                                                                                            
+              if (ackText && fundText) {                                                                                  
+                  result = ackText + '\n\nFunding:\n' + fundText;                                                         
+              } else if (ackText) {                                                                                       
+                  result = ackText;                                                                                       
+              } else if (fundText) {                                                                                      
+                  result = fundText;                                                                                      
+              } else {                                                                                                    
+                  result = 'No acknowledgement section found';                                                            
+              }                                                                                                           
+                                                                                                                          
+              if (result.length > 5000) {                                                                                 
+                  result = result.substring(0, 5000) + '...';                                                             
+              }                                                                                                           
+                                                                                                                          
+              console.log('Acknowledgement extracted:', result.substring(0, 100) + '...');                                
+              return result;                                                                                              
+                                                                                                                          
+          } catch (error) {                                                                                               
+              console.error('Error in GET_ACKNOWLEDGEMENT3:', error);                                                     
+              return `Error: ${error.message}`;                                                                           
+          }                                                                                                               
       }                                                                                                                                                                                                         
                                                                                                                                                                                                                 
       // ============================================================================                                                                                                                           
